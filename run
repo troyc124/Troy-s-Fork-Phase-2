@@ -4,6 +4,7 @@
 install_dependencies() {
     echo "Installing dependencies..."
     npm install
+    npm install axios-mock-adapter
     if [ $? -ne 0 ]; then
         echo "Error installing dependencies"
         exit 1

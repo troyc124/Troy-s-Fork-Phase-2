@@ -11,6 +11,17 @@ const execAsync = promisify(exec);
 
 const program = new Command();
 
+async function deleteJSFiles() {
+    const srcFolder = './src';
+    try {
+        const { stdout, stderr } = await execAsync(`find ${srcFolder} -name "*.js" -type f -delete`);
+        if (stdout) logger.debug(`Deleted .js files: ${stdout}`);
+        if (stderr) logger.debug(`Errors while deleting .js files: ${stderr}`);
+    } catch (error: any) {
+        logger.debug(`Error deleting .js files: ${error.message}`);
+    }
+}
+
 program
     .name("run")
 
@@ -43,35 +54,36 @@ program
         }
     });
 
-program
+    program
     .command('test')
     .description("Run test cases")
-    .action (async () => {
+    .action(async () => {
         logger.info("Running test cases");
-        //Run test cases through Jest
+
+        // Delete .js files before running the tests
+        await deleteJSFiles();
+
+        // Run test cases through Jest
         try {
-            // Run jest with coverage
-            const { stdout, stderr} = await execAsync('npx jest --coverage --silent --noStackTrace'); // Add --silent to keep the output clean
+            const { stdout, stderr } = await execAsync('npx jest --no-cache --coverage'); // Run jest with coverage
             logger.debug(`Test Results:\n${stdout}`);
             logger.debug(`Test Errors:\n${stderr}`);
-            // Regex to extract passed test count, total test count, and line coverage percentage
             const testResults = stderr.match(/Tests:\s+(\d+)\s+passed,\s+(\d+)\s+total/);
             const coverageResults = stdout.match(/All files\s+\|\s+[\d.]+\s+\|\s+[\d.]+\s+\|\s+[\d.]+\s+\|\s+([\d.]+)/);
 
             const passed = testResults ? parseInt(testResults[1], 10) : 0;
             const total = testResults ? parseInt(testResults[2], 10) : 0;
             const coverage = coverageResults ? parseFloat(coverageResults[1]) : 0;
-            
+
             console.log("Total: " + total);
             console.log("Passed: " + passed);
             console.log("Coverage: " + coverage + "%");
             console.log(`${passed}/${total} test cases passed. ${coverage}% line coverage achieved.`);
 
-            // Exit with code 0 for success or non-zero for failure
             logger.debug("RC: 0");
             logger.close();
-            process.exit(0);  // Success
-        } catch (error : any) {
+            process.exit(0); // Success
+        } catch (error: any) {
             logger.info("Error running test cases");
 
             const testResults = error.stderr.match(/Tests:\s+(\d+)\s+failed,\s+(\d+)\s+passed,\s+(\d+)\s+total/);
@@ -79,17 +91,17 @@ program
             const passed = testResults ? parseInt(testResults[2], 10) : 0;
             const total = testResults ? parseInt(testResults[3], 10) : 0;
             const coverage = coverageResults ? parseFloat(coverageResults[1]) : 0;
-            
+
             logger.debug(`Test Errors:\n${error.stderr}`);
             logger.debug(`Test Results:\n${error.stdout}`);
             console.log("Total: " + total);
             console.log("Passed: " + passed);
             console.log("Coverage: " + coverage + "%");
             console.log(`${passed}/${total} test cases passed. ${coverage}% line coverage achieved.`);
-            
+
             logger.debug("RC: 1");
             logger.close();
-            process.exit(1);  // Non-zero exit code on error
+            process.exit(1); // Non-zero exit code on error
         }
     });
 
