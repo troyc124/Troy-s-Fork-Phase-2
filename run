@@ -1,3 +1,39 @@
-#!/usr/bin/env node
+#!/bin/bash
 
-require('./src/cli.js')
+# Install dependencies
+install_dependencies() {
+    echo "Installing dependencies..."
+    npm install
+    if [ $? -ne 0 ]; then
+        echo "Error installing dependencies"
+        exit 1
+    fi
+    echo "Dependencies installed successfully"
+}
+
+# Compile the ts files
+compile_typescript() {
+    npx tsc
+    if [ $? -ne 0 ]; then
+        exit 1
+    fi
+}
+
+# Check for first argument
+if [ "$1" == "install" ]; then
+    install_dependencies
+    compile_typescript
+    exit 0
+fi
+
+# If the first argument is 'test' or a file is provided, check if node_modules exists
+if [ ! -d "node_modules" ]; then
+    echo "Dependencies not installed. Please run './run install' first."
+    exit 1
+fi
+
+# Ensure TypeScript files are compiled before running
+compile_typescript
+
+# Pass the rest of the arguments to the cli.js script
+exec node ./src/cli.js "$@"
