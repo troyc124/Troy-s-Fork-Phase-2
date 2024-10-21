@@ -16,7 +16,6 @@ const logger = createLogger({
         format.printf(info => `${info.timestamp} [${info.level.toUpperCase()}]: ${info.message}`) //Formats the log message
     ),
     transports: [
-        new transports.Console(), //Log to the console
         new transports.File({ filename: logFilePath }) //Log to the file in $LOG_FILE
     ]
 });
