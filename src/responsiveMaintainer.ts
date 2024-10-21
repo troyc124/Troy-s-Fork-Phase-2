@@ -78,7 +78,7 @@ export async function calculateResponsiveMaintainer(issues: any[]) {
         const avgResponseTime = totalResponseTime / issuesWithResponse;
         logger.debug(`Average response time: ${avgResponseTime} hours`);
 
-        const responsiveMaintainerScore = Math.max(0, 1 - (Math.max(0, avgResponseTime - 24) / 24) * 0.25); // Lose points for every day of delay
+        const responsiveMaintainerScore = Math.max(0, 1 - (avgResponseTime / 730) * 0.25);
 
         return responsiveMaintainerScore;
 
