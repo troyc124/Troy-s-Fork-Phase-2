@@ -17,8 +17,9 @@ jobs:
       - name: Set up .env file
         run: |
           echo "GITHUB_TOKEN=${{ secrets.API_KEY }}" >> .env
-          echo "LOG_FILE=${{ ./LOGFILE.txt }}" >> .env
-          echo "LOG_LEVEL=${{ 2 }}" >> .env
+          echo "LOG_FILE=LOGFILE.txt" >> .env  # Assuming you want the file name as a string
+          echo "LOG_LEVEL=2" >> .env  # Assuming this is a static value you want
+
 
       - name: Verify GITHUB_TOKEN
         run: |
