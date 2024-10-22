@@ -6,6 +6,12 @@ on:
       - main  # CI triggers for PRs targeting 'main'
   workflow_dispatch:
 
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+  actions: read
+
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -24,7 +30,7 @@ jobs:
       - name: Verify GITHUB_TOKEN
         run: |
           echo "GITHUB_TOKEN=${{ secrets.API_KEY }}" # Make sure this matches your secret name
-          # Alternatively, for safer logging
+          
           if [ -n "${{ secrets.API_KEY }}" ]; then
             echo "GITHUB_TOKEN is set"
           else
