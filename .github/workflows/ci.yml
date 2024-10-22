@@ -4,6 +4,7 @@ on:
   pull_request:
     branches:
       - main  # CI triggers for PRs targeting 'main'
+  workflow_dispatch:
 
 jobs:
   test:
@@ -19,7 +20,16 @@ jobs:
           echo "LOG_FILE=${{ secrets.LOG_FILE }}" >> .env
           echo "LOG_LEVEL=${{ secrets.LOG_LEVEL }}" >> .env
 
-
+      - name: Verify GITHUB_TOKEN
+        run: |
+          echo "GITHUB_TOKEN=${{ secrets.API_KEY }}" # Make sure this matches your secret name
+          # Alternatively, for safer logging
+          if [ -n "${{ secrets.API_KEY }}" ]; then
+            echo "GITHUB_TOKEN is set"
+          else
+            echo "GITHUB_TOKEN is NOT set"
+          fi
+          
       - name: Install dependencies
         run: ./run install  # Your custom install command
 
