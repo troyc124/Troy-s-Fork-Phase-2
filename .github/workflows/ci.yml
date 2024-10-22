@@ -4,6 +4,7 @@ on:
   pull_request:
     branches:
       - main  # CI triggers for PRs targeting 'main'
+  workflow_dispatch:
 
 jobs:
   test:
