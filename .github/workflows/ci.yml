@@ -23,8 +23,22 @@ jobs:
       - name: Install dependencies
         run: ./run install  # Your custom install command
 
-      - name: Run tests
-        run: ./run test  # Run Jest tests
+      - name: Set up .env file
+        run: |
+        echo "GITHUB_TOKEN=${{ secrets.API_KEY }}" >> .env
+        echo "LOG_FILE=${{ secrets.LOG_FILE }}" >> .env
+        echo "LOG_LEVEL=${{ secrets.LOG_LEVEL }}" >> .env
+        
+      - name: Print secrets for debugging
+        run: |
+        echo "API_KEY=${{ secrets.API_KEY }}"
+        echo "LOG_FILE=${{ secrets.LOG_FILE }}"
+        echo "LOG_LEVEL=${{ secrets.LOG_LEVEL }}"
 
       - name: Show .env file content
         run: cat .env
+
+      - name: Run tests
+        run: ./run test  # Run Jest tests
+
+      
