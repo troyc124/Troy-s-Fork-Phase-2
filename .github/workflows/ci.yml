@@ -13,6 +13,13 @@ jobs:
       - name: Check out code
         uses: actions/checkout@v3
 
+      - name: Set up .env file
+        run: |
+          echo "GITHUB_TOKEN=${{ secrets.API_KEY }}" >> .env
+          echo "LOG_FILE=${{ secrets.LOG_FILE }}" >> .env
+          echo "LOG_LEVEL=${{ secrets.LOG_LEVEL }}" >> .env
+
+
       - name: Install dependencies
         run: ./run install  # Your custom install command
 
