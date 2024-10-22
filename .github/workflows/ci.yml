@@ -35,6 +35,4 @@ jobs:
         run: ./run test  # Run Jest tests
 
 
-      - name: Show .env file content
-        run: cat .env
       
