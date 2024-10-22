@@ -66,3 +66,4 @@ export function checkLicenseCompatibility(content: string) {
     
     return isCompatible;
 }
+//
