@@ -6,6 +6,11 @@ on:
       - main  # CI triggers for PRs targeting 'main'
   workflow_dispatch:
 
+permissions:
+  contents: read
+  issues: write
+  pull-requests: read
+
 jobs:
   test:
     runs-on: ubuntu-latest
