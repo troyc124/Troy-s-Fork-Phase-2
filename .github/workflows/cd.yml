@@ -21,11 +21,11 @@ jobs:
 
       - name: Add EC2 Host to Known Hosts
         run: |
-          ssh-keyscan -H 54.210.169.50 >> ~/.ssh/known_hosts
+          ssh-keyscan -H 3.94.121.132 >> ~/.ssh/known_hosts
 
       - name: Deploy to EC2
         run: |
-          ssh ec2-user@54.210.169.50 "cd /path/to/your/app && git pull && npm install && npm run build"
+          ssh ec2-user@3.94.121.132 "cd /path/to/your/app && git pull && npm install && npm run build"
 
       - name: Clean up SSH key
         run: |
