@@ -140,11 +140,12 @@ exec(`lsof -t -i:${PORT}`, (err, stdout, stderr) => {
     // Kill the process occupying the port
     exec(`kill -9 ${pid}`, (killErr, killStdout, killStderr) => {
       if (killErr || killStderr) {
-        console.error(`Failed to kill process on port ${PORT}: ${killStderr || killErr.message}`);
+        console.error(`Failed to kill process on port ${PORT}: ${killStderr || killErr?.message}`);
       } else {
         console.log(`Successfully killed process on port ${PORT}. Starting server...`);
         startServer();
       }
     });
+    
   }
 });
