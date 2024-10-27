@@ -2,10 +2,12 @@ import express, { Request, Response } from 'express';
 import sqlite3 from 'sqlite3';
 import bcrypt from 'bcryptjs';
 import path from 'path';
+import { exec } from 'child_process';
 
 const app = express();
+const PORT = 3000;
 
-// Path for Database
+// Database setup
 const dbPath = path.join(__dirname, '../db/users.db');
 const db = new sqlite3.Database(dbPath, (err) => {
   if (err) {
@@ -15,37 +17,36 @@ const db = new sqlite3.Database(dbPath, (err) => {
   }
 });
 
-// Get the root directory of the project, which is one level up from `dist`
-const projectRoot = path.resolve(__dirname, '..');
-
-// Middleware to parse incoming requests with JSON and URL-encoded bodies
+// Middleware setup
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Serve static files (if any) from the 'public' directory
+// Static files setup
+const projectRoot = path.resolve(__dirname, '..');
 app.use(express.static(path.join(projectRoot, 'public')));
 
-// Route to serve the sign-in page
+// Routes
+// Serve the sign-in page
 app.get('/sign_in', (req: Request, res: Response) => {
   res.sendFile(path.join(projectRoot, 'views', 'sign_in.html'));
 });
 
-// Route to serve the register page
+// Serve the register page
 app.get('/register', (req: Request, res: Response) => {
   res.sendFile(path.join(projectRoot, 'views', 'register.html'));
 });
 
-// Route to serve the search page
+// Serve the search page
 app.get('/search', (req: Request, res: Response) => {
   res.sendFile(path.join(projectRoot, 'views', 'search.html'));
 });
 
-// Route to serve the user preferences
+// Serve the user preferences page
 app.get('/user_preferences', (req: Request, res: Response) => {
   res.sendFile(path.join(projectRoot, 'views', 'user_preferences.html'));
 });
 
-// Handle form submission from the register page
+// Handle registration form submission
 app.post('/register', (req: Request, res: Response) => {
   const { username, password, email, first_name, last_name } = req.body;
 
@@ -65,7 +66,7 @@ app.post('/register', (req: Request, res: Response) => {
   );
 });
 
-// Handle sign in
+// Handle sign-in form submission
 app.post('/sign_in', (req: Request, res: Response) => {
   const { identifier, password } = req.body;
 
@@ -90,7 +91,7 @@ app.post('/sign_in', (req: Request, res: Response) => {
   );
 });
 
-// Handle updating the user
+// Handle updating the user preferences
 app.post('/update_user', (req: Request, res: Response) => {
   const { first_name, last_name, email } = req.body;
   const userId = 1; // Use session or token to identify user; assuming userId = 1 here
@@ -107,7 +108,7 @@ app.post('/update_user', (req: Request, res: Response) => {
   );
 });
 
-// Handle deleting the account
+// Handle account deletion
 app.post('/delete_account', (req: Request, res: Response) => {
   const userId = 1; // Use session or token to identify user; assuming userId = 1 here
 
@@ -119,8 +120,31 @@ app.post('/delete_account', (req: Request, res: Response) => {
   });
 });
 
-// Start the server
-const PORT = 3000;
-app.listen(PORT, () => {
-  console.log(`Server is running on http://localhost:${PORT}`);
+// Function to start the server
+const startServer = () => {
+  app.listen(PORT, () => {
+    console.log(`Server is running on http://localhost:${PORT}`);
+  });
+};
+
+// Check if port 3000 is in use and attempt to kill any process using it
+exec(`lsof -t -i:${PORT}`, (err, stdout, stderr) => {
+  if (err || stderr) {
+    // No process found using the port, start the server directly
+    startServer();
+  } else {
+    // Port is in use, stdout contains the PID(s) of the process(es) using the port
+    const pid = stdout.trim();
+    console.log(`Port ${PORT} is currently in use by PID ${pid}. Attempting to kill...`);
+
+    // Kill the process occupying the port
+    exec(`kill -9 ${pid}`, (killErr, killStdout, killStderr) => {
+      if (killErr || killStderr) {
+        console.error(`Failed to kill process on port ${PORT}: ${killStderr || killErr.message}`);
+      } else {
+        console.log(`Successfully killed process on port ${PORT}. Starting server...`);
+        startServer();
+      }
+    });
+  }
 });
