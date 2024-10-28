@@ -33,7 +33,6 @@ jobs:
             npx tsc app.ts --outDir dist --esModuleInterop &&
             echo 'Starting server...' &&
             nohup node dist/app.js >> nohup.out 2>&1 &
-            disown
           "
 
       - name: Clean up SSH key
