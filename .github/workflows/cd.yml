@@ -27,7 +27,7 @@ jobs:
             echo 'Changing directory...' &&
             cd /home/ubuntu/ACME-Phase-2 &&
             echo 'Installing dependencies...' &&
-            npm install &&
+            npm run install-deps &&
 
             echo 'Building the project...' &&
             cd user-interface &&
