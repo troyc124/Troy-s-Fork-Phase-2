@@ -22,7 +22,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Static files setup
-const projectRoot = path.resolve(__dirname, '../user-interface');
+const projectRoot = path.resolve(__dirname, '..');
 app.use(express.static(path.join(projectRoot, 'public')));
 
 // Routes
