@@ -4,35 +4,45 @@ on:
   pull_request:
     branches:
       - main  # CI triggers for PRs targeting 'main'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+  actions: read
 
 jobs:
   test:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Check out code
+      - name: Check out PR code
         uses: actions/checkout@v3
+        with:
+          fetch-depth: 0  # Fetch the full history to avoid detached HEAD issues
+          ref: ${{ github.event.pull_request.head.ref }}
+          repository: ${{ github.event.pull_request.head.repo.full_name }}
 
       - name: Set up .env file
         run: |
+          touch .env
           echo "GITHUB_TOKEN=${{ secrets.API_KEY }}" >> .env
-          echo "LOG_FILE=${{ secrets.LOG_FILE }}" >> .env
-          echo "LOG_LEVEL=${{ secrets.LOG_LEVEL }}" >> .env
+          echo "LOG_FILE=LOGFILE.txt" >> .env
+          echo "LOG_LEVEL=2" >> .env
+          cat .env
 
+      - name: Verify GITHUB_TOKEN
+        run: |
+          echo "GITHUB_TOKEN=${{ secrets.API_KEY }}" # Ensure this matches your secret
+          
+          if [ -n "${{ secrets.API_KEY }}" ]; then
+            echo "GITHUB_TOKEN is set"
+          else
+            echo "GITHUB_TOKEN is NOT set"
+          fi
 
       - name: Install dependencies
         run: ./run install  # Your custom install command
 
-        
-      - name: Print secrets for debugging
-        run: |
-        echo "API_KEY=${{ secrets.API_KEY }}"
-        echo "LOG_FILE=${{ secrets.LOG_FILE }}"
-        echo "LOG_LEVEL=${{ secrets.LOG_LEVEL }}"
-
-
       - name: Run tests
         run: ./run test  # Run Jest tests
-
-
-      
