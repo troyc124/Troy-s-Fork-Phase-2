@@ -25,7 +25,7 @@ jobs:
 
       - name: Deploy to EC2
         run: |
-          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no ubuntu@3.94.121.132 "cd /home/ubuntu/ACME-Phase-2 && bash -c './run install && cd user-interface && npx tsc app.ts --outDir dist --esModuleInterop && node dist/app.js > server.log 2>&1 & disown'"
+          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no ubuntu@3.94.121.132 "cd /home/ubuntu/ACME-Phase-2 && ( ./run install && cd user-interface && npx tsc app.ts --outDir dist --esModuleInterop && setsid node dist/app.js > server.log 2>&1 ) &"
 
       - name: Clean up SSH key
         run: |
