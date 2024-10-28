@@ -24,6 +24,7 @@ jobs:
       - name: Deploy to EC2
         run: |
           ssh -i ~/.ssh/id_rsa -o BatchMode=yes -o StrictHostKeyChecking=no ubuntu@3.94.121.132 "
+            cd ACME-Phase-2 &&
             git pull &&
             echo 'Changing directory...' &&
             cd /home/ubuntu/ACME-Phase-2 &&
