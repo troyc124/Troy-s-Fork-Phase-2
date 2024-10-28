@@ -36,8 +36,7 @@ jobs:
             npx tsc app.ts --outDir dist --esModuleInterop &&
 
             echo 'Starting the server in the background...' &&
-            nohup npm run start >> nohup.out 2>&1 &
-            disown
+            npm run start
           "
 
       - name: Clean up SSH key
