@@ -31,9 +31,9 @@ jobs:
             echo 'Installing dependencies...' &&
             ./run install &&
 
-            echo 'Building the project...' &&
+            echo 'Compiling TypeScript...' &&
             cd user-interface &&
-            npm run build-app &&
+            npx tsc app.ts --outDir dist --esModuleInterop &&
 
             echo 'Starting the server in the background...' &&
             nohup npm run start >> nohup.out 2>&1 &
