@@ -30,7 +30,7 @@ jobs:
             npm install &&
 
             echo 'Building the project...' &&
-            npm run build &&
+            npm run build-app &&
 
             echo 'Starting the server in the background...' &&
             nohup npm run start >> nohup.out 2>&1 &
