@@ -49,3 +49,6 @@ jobs:
         
       - name: Run tests
         run: ./run test  # Run your tests (e.g., Jest)
+
+      - name: Run ESLint # Run linter on code
+        run: npx eslint . --ext .ts
