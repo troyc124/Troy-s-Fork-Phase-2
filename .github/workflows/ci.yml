@@ -42,10 +42,9 @@ jobs:
           fi
 
       - name: Install dependencies
-        run: ./run install  # Custom install command
+        run: ./run install  # Your custom install command
 
-      - name: run sample URL file
-        run: ./run "Sample Url File.txt"  # Custom install command
-        
       - name: Run tests
-        run: ./run test  # Run your tests (e.g., Jest)
+        run: ./run test  # Run Jest tests
+        #run: npx jest  
+
