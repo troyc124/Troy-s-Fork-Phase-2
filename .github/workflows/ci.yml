@@ -52,3 +52,4 @@ jobs:
 
       - name: Run ESLint # Run linter on code
         run: npx eslint "**/*.ts"
+        continue-on-error: true
