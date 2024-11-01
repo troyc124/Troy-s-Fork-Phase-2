@@ -111,6 +111,7 @@ describe('calculateResponsiveMaintainer Tests', () => {
     });
 
     it('should return a score', async () => {
+        jest.setTimeout(30000); // Set the timeout to 30 seconds
         const repoName = 'react';
         const ownerName = 'facebook';
         const token = process.env.GITHUB_TOKEN || '';
