@@ -16,7 +16,7 @@ install_dependencies() {
     npm install axios-mock-adapter > /dev/null 2>&1
     npm install express sqlite3 bcryptjs > /dev/null 2>&1
     npm install @types/express @types/sqlite3 @types/bcryptjs --save-dev > /dev/null 2>&1
-    npm install eslint @typescript-eslint/parser @typescript-eslint/eslint-plugin --save-dev > /dev/null 2>&1
+    npm install @typescript-eslint/parser @typescript-eslint/eslint-plugin --save-dev > /dev/null 2>&1
 
     
     if [ $? -ne 0 ]; then

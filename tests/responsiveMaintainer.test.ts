@@ -117,7 +117,7 @@ describe('calculateResponsiveMaintainer Tests', () => {
 
         const score = await getResponsiveMaintainer(ownerName, repoName, token);
         expect(score).toBeDefined();
-    });
+    }, 30000);
 
     it('should return null when using invalid repo or token', async () => {
         const invalidRepo = 'invalidRepo';
