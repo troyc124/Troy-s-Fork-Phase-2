@@ -51,4 +51,4 @@ jobs:
         run: ./run test  # Run your tests (e.g., Jest)
 
       - name: Run ESLint # Run linter on code
-        run: npx eslint . --ext .ts
+        run: npx eslint "**/*.ts"
