@@ -37,7 +37,7 @@ jobs:
 
             echo 'Starting the server in the background...' &&
             #npm run start-bg
-            nohup node app.js >> nohup.out 2>&1 &
+            node app.js > log-$$.log 2>&1 &
             echo 'Job done!'
             exit 0
           "
