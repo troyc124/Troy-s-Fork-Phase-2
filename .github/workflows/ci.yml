@@ -42,14 +42,12 @@ jobs:
           fi
 
       - name: Install dependencies
-        run: ./run install  # Custom install command
+        run: ./run install  # Your custom install command
 
-      - name: run sample URL file
-        run: ./run "Sample Url File.txt"  # Custom install command
-        
       - name: Run tests
         run: ./run test  # Run your tests (e.g., Jest)
 
       - name: Run ESLint # Run linter on code
         run: npx eslint "**/*.ts"
         continue-on-error: true
+
