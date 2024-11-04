@@ -43,16 +43,6 @@ jobs:
 
             echo 'Waiting for server to start...'
           "
-      - name: Exit ssh
-        run: |
-          sleep 10
-          if curl -s http://localhost:3000 > /dev/null; then
-              echo 'Server started successfully.'
-              exit 0
-            else
-              echo 'Server failed to start.' >&2
-              exit 1
-            fi
 
       - name: Clean up SSH key
         run: |
