@@ -15,10 +15,10 @@ const execAsync = promisify(exec);
 async function deleteJSFiles() {
     const srcFolder = './src';
     try {
-        await execAsync(`find ${srcFolder} -name "*.js" -type f -delete`);
-        logger.debug("Deleted all .js files in the src folder.");
+        await execAsync(`find ${srcFolder} -type f \\( -name "*.js" -o -name "*.js.map" \\) -delete`);
+        logger.debug("Deleted all .js and .js.map files in the src folder.");
     } catch (error: any) {
-        logger.debug(`Error deleting .js files: ${error.message}`);
+        logger.debug(`Error deleting .js and .js.map files: ${error.message}`);
     }
 }
 
