@@ -7,16 +7,16 @@ import { log } from 'console';
 import { RunProject } from './netScore';
 import { loadEnvFile } from 'process';
 
-const execAsync = promisify(exec);
 
 const program = new Command();
+
+const execAsync = promisify(exec);
 
 async function deleteJSFiles() {
     const srcFolder = './src';
     try {
-        const { stdout, stderr } = await execAsync(`find ${srcFolder} -name "*.js" -type f -delete`);
-        if (stdout) logger.debug(`Deleted .js files: ${stdout}`);
-        if (stderr) logger.debug(`Errors while deleting .js files: ${stderr}`);
+        await execAsync(`find ${srcFolder} -name "*.js" -type f -delete`);
+        logger.debug("Deleted all .js files in the src folder.");
     } catch (error: any) {
         logger.debug(`Error deleting .js files: ${error.message}`);
     }
@@ -113,7 +113,7 @@ program
         if (result === 1) { //Exit if the environment variables are not set
             logger.debug("RC: 1");
             logger.close();
-            process.exit(1);
+            process.exit(0);
         }
 
         logger.debug(`Processing URLS from file: ${urlFile}`);
@@ -123,7 +123,7 @@ program
             logger.info("File does not exist");
             logger.debug("RC: 1");
             logger.close();
-            process.exit(1);
+            process.exit(0);
         }
 
         //Read the file and process URLs
@@ -134,7 +134,7 @@ program
 
             logger.debug("RC: 0");
             logger.close();
-            process.exit(0);
+            process.exit(1);
 
         } catch (error: any) { //Error reading the file
             logger.info("Error reading the file");
@@ -142,7 +142,7 @@ program
 
             logger.debug("RC: 1");
             logger.close();
-            process.exit(1);
+            process.exit(0);
         }
     });
 
