@@ -41,11 +41,11 @@ jobs:
             echo 'Starting the server in the background...' &&
             nohup node /home/ubuntu/ACME-Phase-2/user-interface/dist/app.js > log-$$.log 2>&1 & disown &&
 
-            echo 'Waiting for server to start...' &&
-            sleep 10 && 
+            echo 'Waiting for server to start...'
           "
       - name: Exit ssh
         run: |
+          sleep 10
           if curl -s http://localhost:3000 > /dev/null; then
               echo 'Server started successfully.'
               exit 0
