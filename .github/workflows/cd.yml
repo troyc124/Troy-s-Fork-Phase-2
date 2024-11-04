@@ -37,8 +37,6 @@ jobs:
 
             echo 'Starting the server in the background...' &&
             nohup node /home/ubuntu/ACME-Phase-2/user-interface/app.js > log-$$.log 2>&1 &
-            echo 'Job done!'
-            exit 0
           "
 
       - name: Clean up SSH key
