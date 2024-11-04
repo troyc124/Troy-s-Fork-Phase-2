@@ -39,18 +39,20 @@ jobs:
             npx tsc app.ts --outDir dist --esModuleInterop &&
 
             echo 'Starting the server in the background...' &&
-            nohup node /home/ubuntu/ACME-Phase-2/user-interface/dist/app.js > log-$$.log 2>&1 &
+            nohup node /home/ubuntu/ACME-Phase-2/user-interface/dist/app.js > log-$$.log 2>&1 & disown &&
 
             echo 'Waiting for server to start...' &&
-            sleep 10 &&
-            
-            if curl -s http://localhost:3000 > /dev/null; then
+            sleep 10 && 
+          "
+      - name: Exit ssh
+        run: |
+          if curl -s http://localhost:3000 > /dev/null; then
               echo 'Server started successfully.'
+              exit 0
             else
               echo 'Server failed to start.' >&2
               exit 1
             fi
-          "
 
       - name: Clean up SSH key
         run: |
