@@ -26,7 +26,8 @@ jobs:
           ssh -i ~/.ssh/id_rsa -o BatchMode=yes -o StrictHostKeyChecking=no ubuntu@3.94.121.132 "
             echo 'Changing directory...' &&
             cd /home/ubuntu/ACME-Phase-2 &&
-            git pull &&
+            git fetch origin &&
+            git reset --hard origin/main &&
             
             echo 'Installing dependencies...' &&
             ./run install &&
