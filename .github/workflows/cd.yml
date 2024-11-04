@@ -37,7 +37,7 @@ jobs:
             npx tsc app.ts --outDir dist --esModuleInterop &&
 
             echo 'Starting the server in the background...' &&
-            nohup node /home/ubuntu/ACME-Phase-2/user-interface/app.js > log-$$.log 2>&1 & disown &&
+            nohup node /home/ubuntu/ACME-Phase-2/user-interface/dist/app.js > log-$$.log 2>&1 & disown &&
             echo 'Started...' &&
             exit
           "
