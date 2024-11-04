@@ -31,6 +31,7 @@ jobs:
             
             echo 'Installing dependencies...' &&
             ./run install &&
+            npm install pm2 --save-dev &&
 
             echo 'Compiling TypeScript...' &&
             cd user-interface &&
