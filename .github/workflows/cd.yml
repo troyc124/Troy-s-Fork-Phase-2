@@ -37,7 +37,9 @@ jobs:
             npx tsc app.ts --outDir dist --esModuleInterop &&
 
             echo 'Starting the server in the background...' &&
-            pm2 start /home/ubuntu/ACME-Phase-2/user-interface/app.js --name my-app
+            nohup node /home/ubuntu/ACME-Phase-2/user-interface/app.js > log-$$.log 2>&1 & disown &&
+            echo 'Started...' &&
+            exit
           "
 
       - name: Clean up SSH key
