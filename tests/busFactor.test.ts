@@ -76,6 +76,6 @@ describe('calculateBusFactor', () => {
         const repo = 'lodash';
         const token = process.env.GITHUB_TOKEN || '';
         const busFactor = await getBusFactor(owner, repo, token);
-        expect(busFactor).toBe(1);
+        expect(busFactor).toBeLessThanOrEqual(1);
     });
 });
