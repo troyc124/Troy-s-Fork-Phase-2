@@ -45,7 +45,10 @@ jobs:
         run: ./run install  # Your custom install command
 
       - name: Run tests
-        run: ./run test  # Run your tests (e.g., Jest)
+        run: ./run test
+
+      - name: Runs test (in detail)
+        run: npx jest --no-cache --coverage
 
       - name: Run ESLint # Run linter on code
         run: npx eslint "**/*.ts"
