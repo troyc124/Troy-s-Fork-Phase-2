@@ -44,6 +44,10 @@ jobs:
       - name: Install dependencies
         run: ./run install  # Your custom install command
 
+      - name: Run sample file
+        # run: ./run test  # Run your tests (e.g., Jest)
+        run: ./run "Sample Url File.txt"
+
       - name: Run tests
         # run: ./run test  # Run your tests (e.g., Jest)
         run: npx jest --no-cache --coverage
