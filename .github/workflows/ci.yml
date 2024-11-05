@@ -48,7 +48,11 @@ jobs:
         # run: ./run test  # Run your tests (e.g., Jest)
         run: ./run "Sample Url File.txt"
 
-      - name: Run tests
+      - name: ./run test
+        # run: ./run test  # Run your tests (e.g., Jest)
+        run: ./run test
+
+      - name: Run npx jest
         # run: ./run test  # Run your tests (e.g., Jest)
         run: npx jest --no-cache --coverage
 
