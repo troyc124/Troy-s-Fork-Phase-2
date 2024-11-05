@@ -44,12 +44,10 @@ jobs:
       - name: Install dependencies
         run: ./run install  # Your custom install command
 
-      - name: ./run test
-        # run: ./run test  # Run your tests (e.g., Jest)
+      - name: Run tests
         run: ./run test
 
-      - name: Run npx jest
-        # run: ./run test  # Run your tests (e.g., Jest)
+      - name: Runs test (in detail)
         run: npx jest --no-cache --coverage
 
       - name: Run ESLint # Run linter on code
