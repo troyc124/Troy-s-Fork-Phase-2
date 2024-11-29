@@ -22,21 +22,19 @@ jobs:
         chmod 600 ~/.ssh/id_rsa
         ssh-keyscan -H 52.87.248.32 >> ~/.ssh/known_hosts
 
-    # Step 3: Send shutdown signal to the remote application
-    - name: Send shutdown signal
+    # Step 3: Stop EC2 instance
+    - name: Stop EC2 Instance
       run: |
-        ssh -i ~/.ssh/id_rsa ubuntu@52.87.248.32 "echo 'shutdown' > /home/ubuntu/ACME-phase-2/ACME-Phase-2/shutdown_signal"
+        aws ec2 stop-instances --instance-ids ${{ secrets.AWS_EC2_INSTANCE_ID }}
 
-    # Step 4: Wait for the application to stop
-    - name: Wait for application shutdown
+    # Step 4: Wait for EC2 instance to stop
+    - name: Wait for EC2 instance to stop
       run: |
-        ssh -i ~/.ssh/id_rsa ubuntu@52.87.248.32 "
-          while [ -f /home/ubuntu/ACME-phase-2/ACME-Phase-2/running.lock ]; do
-              echo 'Waiting for application to stop...';
-              sleep 2;
-          done
-        "
-        echo "Application stopped successfully."
+        while [ "$(aws ec2 describe-instances --instance-ids ${{ secrets.AWS_EC2_INSTANCE_ID }} --query "Reservations[].Instances[].State.Name" --output text)" != "stopped" ]; do
+          echo "Waiting for EC2 instance to stop...";
+          sleep 10;
+        done
+        echo "EC2 instance stopped successfully."
 
     # Step 5: Upload the new code
     - name: Upload new code
