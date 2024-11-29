@@ -128,7 +128,7 @@ const shutdown = () =>  {
       }
     });
   });
-});
+};
 
 // Function to start the server
 const startServer = () => {
