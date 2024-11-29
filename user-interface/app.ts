@@ -108,7 +108,7 @@ app.post('/delete_account', (req: Request, res: Response) => {
 });
 
 // Graceful shutdown route
-app.post('/shutdown', (req: Request, res: Response) => {
+const shutdown = () =>  {
   console.log('Received shutdown signal. Closing server...');
 
   // Stop accepting new requests
@@ -138,4 +138,5 @@ const startServer = () => {
 };
 
 // Start the server
+shutdown();
 startServer();
