@@ -1,4 +1,4 @@
-name: Deploy and Stop EC2 Instance
+name: Deploy and Shutdown EC2
 
 on:
   push:
@@ -9,9 +9,11 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
+      # Step 1: Checkout the repository
       - name: Checkout code
         uses: actions/checkout@v2
 
+      # Step 2: Set up AWS CLI with AWS credentials from GitHub Secrets
       - name: Set up AWS CLI
         run: |
           mkdir -p ~/.aws
@@ -21,12 +23,32 @@ jobs:
           echo "[default]" > ~/.aws/config
           echo "region=${{ secrets.AWS_REGION }}" >> ~/.aws/config
 
-      - name: Deploy application
+      # Step 3: Send shutdown signal to the remote application via SSH
+      - name: Send shutdown signal
         run: |
-          # Your deployment commands here (e.g., AWS Elastic Beanstalk, ECS, etc.)
-          echo "Deploying application..."
+          ssh -i ~/.ssh/id_rsa -o BatchMode=yes -o StrictHostKeyChecking=no ubuntu@52.87.248.32 "echo 'shutdown' > /home/ubuntu/ACME-phase-2/ACME-Phase-2/shutdown_signal"
+        continue-on-error: true  # Ensure the workflow continues even if the shutdown signal fails
 
+      # Step 4: Wait for the application to stop
+      - name: Wait for application shutdown
+        run: |
+          ssh -i ~/.ssh/id_rsa -o BatchMode=yes -o StrictHostKeyChecking=no ubuntu@52.87.248.32 "
+            while [ -f /home/ubuntu/ACME-phase-2/ACME-Phase-2/running.lock ]; do
+                echo 'Waiting for application to stop...';
+                sleep 2;
+            done
+          "
+          echo "Application stopped successfully."
+
+      # Step 5: Stop EC2 instance
       - name: Stop EC2 instance
         run: |
           aws ec2 stop-instances --instance-ids ${{ secrets.AWS_EC2_INSTANCE_ID }} --region ${{ secrets.AWS_REGION }}
           echo "EC2 instance stopped successfully."
+
+      # Step 6: Deploy the new code (e.g., AWS CodeDeploy, Elastic Beanstalk, or your specific deployment process)
+      - name: Deploy application
+        run: |
+          # Replace this with your actual deployment commands, such as:
+          # aws deploy create-deployment ...
+          echo "Deploying application..."
