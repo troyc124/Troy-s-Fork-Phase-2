@@ -25,7 +25,8 @@ jobs:
     # Step 3: Stop EC2 instance
     - name: Stop EC2 Instance
       run: |
-        aws ec2 stop-instances --instance-ids ${{ secrets.AWS_EC2_INSTANCE_ID }}
+        aws ec2 stop-instances --instance-ids ${{ secrets.AWS_EC2_INSTANCE_ID }} --region ${{ secrets.AWS_REGION }}
+
 
     # Step 4: Wait for EC2 instance to stop
     - name: Wait for EC2 instance to stop
