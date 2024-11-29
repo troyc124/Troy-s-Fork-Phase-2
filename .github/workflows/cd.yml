@@ -1,61 +1,32 @@
-name: Continuous Deployment to AWS
+name: Deploy and Stop EC2 Instance
+
 on:
   push:
     branches:
       - main
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
-      
-      - name: Set up SSH key
+
+      - name: Set up AWS CLI
         run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.AWS_RSA_KEY }}" > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
-      
-      - name: Add EC2 Host to Known Hosts
+          mkdir -p ~/.aws
+          echo "[default]" > ~/.aws/credentials
+          echo "aws_access_key_id=${{ secrets.AWS_ACCESS_KEY_ID }}" >> ~/.aws/credentials
+          echo "aws_secret_access_key=${{ secrets.AWS_SECRET_ACCESS_KEY }}" >> ~/.aws/credentials
+          echo "[default]" > ~/.aws/config
+          echo "region=${{ secrets.AWS_REGION }}" >> ~/.aws/config
+
+      - name: Deploy application
         run: |
-          ssh-keyscan -H 52.87.248.32 >> ~/.ssh/known_hosts
-      
-      - name: Deploy to EC2
+          # Your deployment commands here (e.g., AWS Elastic Beanstalk, ECS, etc.)
+          echo "Deploying application..."
+
+      - name: Stop EC2 instance
         run: |
-          ssh -i ~/.ssh/id_rsa -o BatchMode=yes -o StrictHostKeyChecking=no ubuntu@52.87.248.32 "
-            set -e  # Exit immediately if a command exits with a non-zero status
-            
-            echo 'Changing directory...' &&
-            cd /home/ubuntu/ACME-Phase-2 &&
-            
-            echo 'Stopping existing server process...' &&
-            pkill -f 'node /home/ubuntu/ACME-Phase-2/user-interface/dist/app.js' || true &&
-            
-            # Wait a moment to ensure process is fully stopped
-            sleep 2 &&
-            
-            echo 'Fetching latest code...' &&
-            git fetch origin &&
-            git reset --hard origin/main &&
-            
-            echo 'Installing dependencies...' &&
-            ./run install &&
-            
-            echo 'Compiling TypeScript...' &&
-            cd user-interface &&
-            npx tsc app.ts --outDir dist --esModuleInterop &&
-            
-            echo 'Starting the server in the background...' &&
-            LOG_FILE=\"log-$(date +%Y%m%d%H%M%S).log\" &&
-            nohup node /home/ubuntu/ACME-Phase-2/user-interface/dist/app.js > \"\$LOG_FILE\" 2>&1 & 
-            
-            # Verify the process is running
-            sleep 5 &&
-            ps aux | grep 'node /home/ubuntu/ACME-Phase-2/user-interface/dist/app.js' &&
-            
-            echo 'Deployment complete!'
-          "
-      
-      - name: Clean up SSH key
-        run: |
-          rm -f ~/.ssh/id_rsa
+          aws ec2 stop-instances --instance-ids ${{ secrets.AWS_EC2_INSTANCE_ID }} --region ${{ secrets.AWS_REGION }}
+          echo "EC2 instance stopped successfully."
