@@ -108,7 +108,7 @@ app.post('/delete_account', (req: Request, res: Response) => {
 });
 
 // Graceful shutdown function
-const shutdown = (callback: () => void) => {
+const shutdown = (callback?: () => void) => {
   console.log('Received shutdown signal. Closing server...');
 
   // Stop accepting new requests
