@@ -23,29 +23,50 @@ jobs:
         run: |
           ssh-keyscan -H 52.87.248.32 >> ~/.ssh/known_hosts
 
-            
+      # # Step 1: Backup the database
+      # - name: Backup the database
+      #   run: |
+      #     ssh -i ~/.ssh/id_rsa -o BatchMode=yes -o StrictHostKeyChecking=no ubuntu@52.87.248.32 "
+      #       echo 'Backing up the database...';
+      #       # Replace with your database backup command, e.g., for MySQL
+      #       mysqldump -u username -p'password' database_name > /home/ubuntu/db_backup.sql &&
+      #       echo 'Database backup complete.'
+      #     "
+
+      # Step 2: Create an AMI of the EC2 instance
+      - name: Create AMI of EC2 instance
+        run: |
+          aws ec2 create-image --instance-id ${{ secrets.AWS_EC2_INSTANCE_ID }} --name "Backup-$(date +'%Y-%m-%d-%H-%M')" --no-reboot --region ${{ secrets.AWS_REGION }}
+          echo "AMI creation initiated."
+
+      # Step 3: Send shutdown command to the remote application
+      - name: Send shutdown command to the remote application
+        run: |
+          ssh -i ~/.ssh/id_rsa -o BatchMode=yes -o StrictHostKeyChecking=no ubuntu@52.87.248.32 "
+            echo 'Stopping the server...' &&
+            pkill -f 'node /home/ubuntu/ACME-Phase-2/user-interface/dist/app.js' &&  # Replace this with your app's main process name
+            echo 'Server stopped.'
+          "
+
+      # Step 4: Wait for the application process to terminate
+      - name: Wait for application process to terminate
+        run: |
+          echo "Waiting for the application to stop..."
+          while ssh -i ~/.ssh/id_rsa -o BatchMode=yes -o StrictHostKeyChecking=no ubuntu@52.87.248.32 "pgrep -f 'node /home/ubuntu/ACME-Phase-2/user-interface/dist/app.js'"; do
+            echo 'Waiting for application to stop...';
+            sleep 2;
+          done
+          echo "Application stopped successfully."
+
+      # Step 5: Deploy the new version of the application
       - name: Deploy to EC2
         run: |
           ssh -i ~/.ssh/id_rsa -o BatchMode=yes -o StrictHostKeyChecking=no ubuntu@52.87.248.32 "
             echo 'Changing directory...' &&
             cd /home/ubuntu/ACME-Phase-2 &&
-            
-            # Send shutdown signal
-            echo 'Sending shutdown signal to application...' &&
-            echo 'shutdown' > /home/ubuntu/ACME-Phase-2/shutdown_signal &&
-
-            # Wait for application to stop
-            while [ -f /home/ubuntu/ACME-Phase-2/running.lock ]; do
-                echo 'Waiting for application to stop...';
-                sleep 2;
-            done
-            echo 'Application stopped successfully.' &&
-
-            # Deploy new code
-            echo 'Fetching new code...' &&
             git fetch origin &&
             git reset --hard origin/main &&
-
+            
             echo 'Installing dependencies...' &&
             ./run install &&
 
@@ -56,9 +77,10 @@ jobs:
             echo 'Starting the server in the background...' &&
             nohup node /home/ubuntu/ACME-Phase-2/user-interface/dist/app.js > log-$$.log 2>&1 & disown &&
 
-            echo 'Server started successfully.'
+            echo 'Waiting for server to start...'
           "
 
+      # Step 6: Clean up SSH key
       - name: Clean up SSH key
         run: |
           rm -f ~/.ssh/id_rsa
