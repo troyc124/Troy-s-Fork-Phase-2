@@ -1,4 +1,4 @@
-name: CD Pipeline
+name: Continuous Deployment to AWS
 
 on:
   push:
@@ -10,51 +10,41 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    # Step 1: Checkout the repository
-    - name: Checkout code
-      uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v2
 
-    # Step 2: Set up SSH
-    - name: Set up SSH
-      run: |
-        mkdir -p ~/.ssh
-        echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
-        chmod 600 ~/.ssh/id_rsa
-        ssh-keyscan -H 52.87.248.32 >> ~/.ssh/known_hosts
+      - name: Set up SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.AWS_RSA_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
 
-      # Step 2: Set up AWS CLI with credentials
-    - name: Configure AWS CLI
-      run: |
-        mkdir -p ~/.aws
-        echo "[default]" > ~/.aws/credentials
-        echo "aws_access_key_id=${{ secrets.AWS_ACCESS_KEY_ID }}" >> ~/.aws/credentials
-        echo "aws_secret_access_key=${{ secrets.AWS_SECRET_ACCESS_KEY }}" >> ~/.aws/credentials
-        echo "[default]" > ~/.aws/config
-        echo "region=${{ secrets.AWS_REGION }}" >> ~/.aws/config
+      - name: Add EC2 Host to Known Hosts
+        run: |
+          ssh-keyscan -H 52.87.248.32 >> ~/.ssh/known_hosts
 
-    # Step 3: Stop EC2 instance
-    - name: Stop EC2 Instance
-      run: |
-        aws ec2 stop-instances --instance-ids ${{ secrets.AWS_EC2_INSTANCE_ID }} --region ${{ secrets.AWS_REGION }}
+      - name: Deploy to EC2
+        run: |
+          ssh -i ~/.ssh/id_rsa -o BatchMode=yes -o StrictHostKeyChecking=no ubuntu@52.87.248.32 "
+            echo 'Changing directory...' &&
+            cd /home/ubuntu/ACME-Phase-2 &&
+            git fetch origin &&
+            git reset --hard origin/main &&
+            
+            echo 'Installing dependencies...' &&
+            ./run install &&
 
-    # Step 4: Wait for EC2 instance to stop
-    - name: Wait for EC2 instance to stop
-      run: |
-        while [ "$(aws ec2 describe-instances --instance-ids ${{ secrets.AWS_EC2_INSTANCE_ID }} --query "Reservations[].Instances[].State.Name" --output text)" != "stopped" ]; do
-          echo "Waiting for EC2 instance to stop...";
-          sleep 10;
-        done
-        echo "EC2 instance stopped successfully."
-    # Step 5: Upload the new code
-    - name: Upload new code
-      run: |
-        scp -i ~/.ssh/id_rsa -r ./ACME-Phase-2 ubuntu@52.87.248.32:/home/ubuntu/ACME-phase-2/ACME-Phase-2
+            echo 'Compiling TypeScript...' &&
+            cd user-interface &&
+            npx tsc app.ts --outDir dist --esModuleInterop &&
 
-    # Step 6: Start the updated application
-    - name: Start the new application
-      run: |
-        ssh -i ~/.ssh/id_rsa ubuntu@52.87.248.32 "
-          cd /home/ubuntu/ACME-phase-2/ACME-Phase-2 &&
-          nohup ./run_application.sh > application.log 2>&1 &
-        "
-      continue-on-error: false
+            echo 'Starting the server in the background...' &&
+            ls &&
+            nohup node /home/ubuntu/ACME-Phase-2/user-interface/dist/app.js > log-$$.log 2>&1 & disown &&
+
+            echo 'Waiting for server to start...'
+          "
+
+      - name: Clean up SSH key
+        run: |
+          rm -f ~/.ssh/id_rsa
