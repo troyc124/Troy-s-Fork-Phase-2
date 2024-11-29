@@ -107,8 +107,8 @@ app.post('/delete_account', (req: Request, res: Response) => {
   });
 });
 
-// Graceful shutdown route
-const shutdown = () =>  {
+// Graceful shutdown function
+const shutdown = (callback: () => void) => {
   console.log('Received shutdown signal. Closing server...');
 
   // Stop accepting new requests
@@ -119,13 +119,17 @@ const shutdown = () =>  {
     db.close((err) => {
       if (err) {
         console.error('Error closing database:', err.message);
-        res.status(500).send('Error during shutdown.');
-        process.exit(1);
+        process.exit(1); // Exit with an error code
       } else {
         console.log('Database connection closed.');
-        res.status(200).send('Shutdown complete.');
-        process.exit(0);
       }
+
+      // Execute the callback if provided (e.g., final cleanup actions)
+      if (callback) {
+        callback();
+      }
+
+      process.exit(0); // Exit gracefully
     });
   });
 };
