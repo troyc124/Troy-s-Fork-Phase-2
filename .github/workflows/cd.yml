@@ -1,4 +1,4 @@
-name: Deploy and Shutdown EC2
+name: Continuous Deployment to AWS
 
 on:
   push:
@@ -8,47 +8,57 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+
     steps:
-      # Step 1: Checkout the repository
       - name: Checkout code
         uses: actions/checkout@v2
 
-      # Step 2: Set up AWS CLI with AWS credentials from GitHub Secrets
-      - name: Set up AWS CLI
+      - name: Set up SSH key
         run: |
-          mkdir -p ~/.aws
-          echo "[default]" > ~/.aws/credentials
-          echo "aws_access_key_id=${{ secrets.AWS_ACCESS_KEY_ID }}" >> ~/.aws/credentials
-          echo "aws_secret_access_key=${{ secrets.AWS_SECRET_ACCESS_KEY }}" >> ~/.aws/credentials
-          echo "[default]" > ~/.aws/config
-          echo "region=${{ secrets.AWS_REGION }}" >> ~/.aws/config
+          mkdir -p ~/.ssh
+          echo "${{ secrets.AWS_RSA_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
 
-      # Step 3: Send shutdown signal to the remote application via SSH
-      - name: Send shutdown signal
+      - name: Add EC2 Host to Known Hosts
         run: |
-          ssh -i ~/.ssh/id_rsa -o BatchMode=yes -o StrictHostKeyChecking=no ubuntu@52.87.248.32 "echo 'shutdown' > /home/ubuntu/ACME-phase-2/ACME-Phase-2/shutdown_signal"
-        continue-on-error: true  # Ensure the workflow continues even if the shutdown signal fails
+          ssh-keyscan -H 52.87.248.32 >> ~/.ssh/known_hosts
 
-      # Step 4: Wait for the application to stop
-      - name: Wait for application shutdown
+            
+      - name: Deploy to EC2
         run: |
           ssh -i ~/.ssh/id_rsa -o BatchMode=yes -o StrictHostKeyChecking=no ubuntu@52.87.248.32 "
-            while [ -f /home/ubuntu/ACME-phase-2/ACME-Phase-2/running.lock ]; do
+            echo 'Changing directory...' &&
+            cd /home/ubuntu/ACME-Phase-2 &&
+            
+            # Send shutdown signal
+            echo 'Sending shutdown signal to application...' &&
+            echo 'shutdown' > /home/ubuntu/ACME-Phase-2/shutdown_signal &&
+
+            # Wait for application to stop
+            while [ -f /home/ubuntu/ACME-Phase-2/running.lock ]; do
                 echo 'Waiting for application to stop...';
                 sleep 2;
             done
+            echo 'Application stopped successfully.' &&
+
+            # Deploy new code
+            echo 'Fetching new code...' &&
+            git fetch origin &&
+            git reset --hard origin/main &&
+
+            echo 'Installing dependencies...' &&
+            ./run install &&
+
+            echo 'Compiling TypeScript...' &&
+            cd user-interface &&
+            npx tsc app.ts --outDir dist --esModuleInterop &&
+
+            echo 'Starting the server in the background...' &&
+            nohup node /home/ubuntu/ACME-Phase-2/user-interface/dist/app.js > log-$$.log 2>&1 & disown &&
+
+            echo 'Server started successfully.'
           "
-          echo "Application stopped successfully."
 
-      # Step 5: Stop EC2 instance
-      - name: Stop EC2 instance
+      - name: Clean up SSH key
         run: |
-          aws ec2 stop-instances --instance-ids ${{ secrets.AWS_EC2_INSTANCE_ID }} --region ${{ secrets.AWS_REGION }}
-          echo "EC2 instance stopped successfully."
-
-      # Step 6: Deploy the new code (e.g., AWS CodeDeploy, Elastic Beanstalk, or your specific deployment process)
-      - name: Deploy application
-        run: |
-          # Replace this with your actual deployment commands, such as:
-          # aws deploy create-deployment ...
-          echo "Deploying application..."
+          rm -f ~/.ssh/id_rsa
