@@ -2,11 +2,16 @@ import express, { Request, Response } from 'express';
 import sqlite3 from 'sqlite3';
 import bcrypt from 'bcryptjs';
 import path from 'path';
+import { uploadToS3 } from './routes/s3uploader'; // Import the function from the other file
+import multer from 'multer';
+import fs from 'fs';
+import { exec } from 'child_process';
+
 
 const app = express();
 const PORT = 3000;
 
-let server: any; // Define a variable to hold the server instance
+const upload = multer({ dest: 'uploads/' }); // Temporary directory for file uploads
 
 // Database setup
 const dbPath = path.join(__dirname, '../db/users.db');
@@ -107,32 +112,18 @@ app.post('/delete_account', (req: Request, res: Response) => {
   });
 });
 
-// Graceful shutdown function
-const shutdown = (callback?: () => void) => {
-  console.log('Received shutdown signal. Closing server...');
+// Handle uploading packages to S3
+app.post('/api/upload', upload.single('file'), async (req, res) => {
+  const { bucketName, key } = req.body; // Ensure these are passed from the client
+  const filePath = req.file.path;
 
-  // Stop accepting new requests
-  server.close(() => {
-    console.log('Server stopped accepting new connections.');
-
-    // Close the database connection
-    db.close((err) => {
-      if (err) {
-        console.error('Error closing database:', err.message);
-        process.exit(1); // Exit with an error code
-      } else {
-        console.log('Database connection closed.');
-      }
-
-      // Execute the callback if provided (e.g., final cleanup actions)
-      if (callback) {
-        callback();
-      }
-
-      process.exit(0); // Exit gracefully
-    });
-  });
-};
+  try {
+    const result = await uploadToS3(bucketName, key, filePath);
+    res.status(200).json({ message: 'Upload successful', data: result });
+  } catch (err) {
+    res.status(500).json({ error: 'Upload failed', details: err.message });
+  }
+});
 
 // Function to start the server
 const startServer = () => {
