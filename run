@@ -18,6 +18,8 @@ install_dependencies() {
     npm install @types/express @types/sqlite3 @types/bcryptjs --save-dev > /dev/null 2>&1
     npm install @typescript-eslint/parser @typescript-eslint/eslint-plugin --save-dev > /dev/null 2>&1
     npm install aws-sdk # AWS interactions
+    npm install multer
+
 
     
     if [ $? -ne 0 ]; then
