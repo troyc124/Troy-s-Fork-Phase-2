@@ -103,8 +103,7 @@ jobs:
             ./run install &&
 
             echo 'Compiling TypeScript...' &&
-            cd user-interface &&
-            npx tsc app.ts --outDir dist --esModuleInterop &&
+            node --max-old-space-size=2048 ./node_modules/typescript/bin/tsc --esModuleInterop user-interface/app.ts &&
 
             echo 'Stopping existing app with pm2...' &&
             pm2 stop webapp || true &&
