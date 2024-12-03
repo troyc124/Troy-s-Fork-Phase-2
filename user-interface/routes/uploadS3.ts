@@ -4,7 +4,9 @@ import path from 'path';
 import dotenv from 'dotenv';
 
 // Load environment variables
-dotenv.config({ path: path.resolve(__dirname, '../../.env') });
+// dotenv.config({ path: path.resolve(__dirname, '../../.env') });
+dotenv.config();
+
 
 // Configure AWS SDK
 AWS.config.update({
@@ -12,6 +14,7 @@ AWS.config.update({
   secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
   region: 'us-east-1',
 });
+
 
 const s3 = new AWS.S3();
 
