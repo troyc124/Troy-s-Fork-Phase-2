@@ -1,3 +1,59 @@
+# name: Continuous Deployment to AWS
+
+# on:
+#   push:
+#     branches:
+#       - main
+
+# jobs:
+#   deploy:
+#     runs-on: ubuntu-latest
+
+#     steps:
+#       - name: Checkout code
+#         uses: actions/checkout@v2
+
+#       - name: Set up SSH key
+#         run: |
+#           mkdir -p ~/.ssh
+#           echo "${{ secrets.AWS_RSA_KEY }}" > ~/.ssh/id_rsa
+#           chmod 600 ~/.ssh/id_rsa
+
+#       - name: Add EC2 Host to Known Hosts
+#         run: |
+#           ssh-keyscan -H 52.87.248.32 >> ~/.ssh/known_hosts
+          
+#       - name: Deploy to EC2
+#         run: |
+#           ssh -i ~/.ssh/id_rsa -o BatchMode=yes -o StrictHostKeyChecking=no ubuntu@52.87.248.32 "
+#             echo 'Changing directory...' &&
+#             cd /home/ubuntu/ACME-Phase-2 &&
+#             git fetch origin &&
+#             git reset --hard origin/main &&
+
+#             echo 'Setting up .env...' &&
+#             touch .env &&
+#             echo "AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}" >> .env &&
+#             echo "AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}" >> .env &&
+#             cat .env &&
+            
+#             echo 'Installing dependencies...' &&
+#             ./run install &&
+
+#             echo 'Compiling TypeScript...' &&
+#             cd user-interface &&
+#             npx tsc app.ts --outDir dist --esModuleInterop &&
+
+#             echo 'Starting the server in the background...' &&
+#             ls &&
+#             nohup node /home/ubuntu/ACME-Phase-2/user-interface/dist/app.js > log-$$.log 2>&1 & disown &&
+
+#             echo 'Waiting for server to start...'
+#           "
+
+#       - name: Clean up SSH key
+#         run: |
+#           rm -f ~/.ssh/id_rsa
 name: Continuous Deployment to AWS
 
 on:
@@ -22,7 +78,7 @@ jobs:
       - name: Add EC2 Host to Known Hosts
         run: |
           ssh-keyscan -H 52.87.248.32 >> ~/.ssh/known_hosts
-          
+
       - name: Deploy to EC2
         run: |
           ssh -i ~/.ssh/id_rsa -o BatchMode=yes -o StrictHostKeyChecking=no ubuntu@52.87.248.32 "
@@ -33,10 +89,10 @@ jobs:
 
             echo 'Setting up .env...' &&
             touch .env &&
-            echo "AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}" >> .env &&
-            echo "AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}" >> .env &&
+            echo \"AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}\" >> .env &&
+            echo \"AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}\" >> .env &&
             cat .env &&
-            
+
             echo 'Installing dependencies...' &&
             ./run install &&
 
@@ -44,11 +100,14 @@ jobs:
             cd user-interface &&
             npx tsc app.ts --outDir dist --esModuleInterop &&
 
-            echo 'Starting the server in the background...' &&
-            ls &&
-            nohup node /home/ubuntu/ACME-Phase-2/user-interface/dist/app.js > log-$$.log 2>&1 & disown &&
+            echo 'Stopping existing app with pm2...' &&
+            pm2 stop webapp || true &&
 
-            echo 'Waiting for server to start...'
+            echo 'Starting the app with pm2...' &&
+            pm2 start /home/ubuntu/ACME-Phase-2/user-interface/dist/app.js --name webapp &&
+
+            echo 'Saving pm2 process list...' &&
+            pm2 save
           "
 
       - name: Clean up SSH key
