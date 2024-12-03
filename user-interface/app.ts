@@ -138,34 +138,7 @@ app.put('/upload/:packageName/:version', async (req: Request, res: Response): Pr
   }
 });
 
-// Graceful shutdown function
-const shutdown = (callback?: () => void) => {
-  console.log('Received shutdown signal. Closing server...');
-
-  // Stop accepting new requests
-  server.close(() => {
-    console.log('Server stopped accepting new connections.');
-
-    // Close the database connection
-    db.close((err) => {
-      if (err) {
-        console.error('Error closing database:', err.message);
-        process.exit(1); // Exit with an error code
-      } else {
-        console.log('Database connection closed.');
-      }
-
-      // Execute the callback if provided (e.g., final cleanup actions)
-      if (callback) {
-        callback();
-      }
-
-      process.exit(0); // Exit gracefully
-    });
-  });
-};
-
-// Function to start the server
+// Start the server
 const startServer = () => {
   server = app.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
@@ -173,5 +146,4 @@ const startServer = () => {
 };
 
 // Start the server
-shutdown();
 startServer();
