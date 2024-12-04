@@ -104,7 +104,7 @@ jobs:
             ./run install &&
 
             echo 'Compiling TypeScript...' &&
-            node --max-old-space-size=2048 ./node_modules/typescript/bin/tsc --esModuleInterop user-interface/app.ts &&
+            node --max-old-space-size=2048 ./node_modules/typescript/bin/tsc --esModuleInterop user-interface/app.ts --outDir user-interface/dist &&
 
             echo 'Stopping existing app with pm2...' &&
             pm2 stop webapp || true &&
