@@ -37,27 +37,24 @@
     </ul>
 
     <!-- Upload Form -->
-    <div class="upload-section">
-      <h2>Upload a Package</h2>
-      <form id="uploadForm" action="/upload" method="POST" enctype="multipart/form-data">
-        <label for="packageName">Package Name:</label>
-        <input type="text" id="packageName" name="packageName" required>
-
-        <label for="version">Version:</label>
-        <input type="text" id="version" name="version" placeholder="e.g., 1.0.0" required>
-
-        <label for="package">Select .zip File:</label>
-        <input type="file" id="package" name="package" accept=".zip" required>
-
-        <label for="debloat">
-          <input type="checkbox" id="debloat" name="debloat">
-          Enable Debloating
-        </label>
-
-        <button type="submit">Upload</button>
-      </form>
-    </div>
-  </div>
+    <form id="uploadForm" method="POST" enctype="multipart/form-data">
+      <label for="packageName">Package Name:</label>
+      <input type="text" id="packageName" name="packageName" required>
+    
+      <label for="version">Version:</label>
+      <input type="text" id="version" name="version" placeholder="e.g., 1.0.0" required>
+    
+      <label for="package">Select .zip File:</label>
+      <input type="file" id="package" name="package" accept=".zip" required>
+    
+      <label for="debloat">
+        <input type="checkbox" id="debloat" name="debloat">
+        Enable Debloating
+      </label>
+    
+      <button type="button" id="uploadButton">Upload</button>
+    </form>
+    
 
   <script>
     // JavaScript to filter packages based on search input
@@ -75,5 +72,41 @@
       });
     }
   </script>
+
+  <script>
+    document.getElementById('uploadButton').addEventListener('click', async () => {
+      const packageName = document.getElementById('packageName').value.trim();
+      const version = document.getElementById('version').value.trim();
+      const fileInput = document.getElementById('package');
+      const file = fileInput.files[0];
+
+      if (!packageName || !version || !file) {
+        alert('Please fill in all required fields and select a file.');
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append('package', file);
+
+      try {
+        const response = await fetch(`/upload/${packageName}/${version}`, {
+          method: 'PUT', // Matches the HTTP method in your API
+          body: formData,
+        });
+
+        if (response.ok) {
+          const result = await response.text();
+          alert(`Success: ${result}`);
+        } else {
+          const error = await response.text();
+          alert(`Error: ${error}`);
+        }
+      } catch (err) {
+        console.error('Error during upload:', err);
+        alert('An error occurred while uploading the file.');
+      }
+    });
+  </script>
+
 </body>
 </html>
