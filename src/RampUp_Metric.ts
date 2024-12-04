@@ -71,7 +71,7 @@ score = (actual number of sections) / (expected number of sections)
 */
 
 // Expected number of sections
-const expectedSections = 26;
+// const expectedSections = 29;
 // logger.info(`Expected number of sections: ${expectedSections}`);
 
 // Function to get the default branch of a GitHub repository
@@ -207,43 +207,57 @@ function readFiles(dirPath: string) {
     }
     return 'false';
 }
+
 function checkSections(files: string | any[]) {
-    // If files doesn't exist, return 0
-    // console.log('files: ' + files);
     logger.info(`files: ${files}`);
-
-    if(files == null) {
-        // console.log(`No files found in the directory`);
-        logger.info(`No files found in the directory`);
-        return 0;
+  
+    if (!files || files.length < 2) {
+      logger.warn('Invalid files array, cannot proceed');
+      return 0;
     }
-    // If README.md wasn't found, return 0
-    else if(files == "false") {
-        // console.log(`No README.md found`);
-        logger.info(`No README.md found`);
-        return 0;
+  
+    let content;
+    try {
+      // Attempt to read the README file and convert it to lowercase
+      content = fs.readFileSync(path.join(files[1], files[0]), 'utf8').toLowerCase();
+    } catch (error) {
+      logger.error(`Failed to read README.md from ${files[1]}/${files[0]}: ${(error as Error).message}`);
+      return 0; // Return score of 0 if the file couldn't be read
     }
-    // console.log(`Reading README.md from ${files[1]}/${files[0]}`);
-    logger.info(`Reading README.md from ${files[1]}/${files[0]}`);
-
-    const content = fs.readFileSync(path.join(files[1], files[0]), 'utf8');
+  
+    // If the content is empty, return 0
+    if (!content) {
+      logger.warn(`README.md content is empty for ${files[1]}/${files[0]}`);
+      return 0;
+    }
+  
     let score = 0;
-    const sections = [  'Table of Contents', 'Table of contents', 'Installation', 'Examples', 'Troubleshooting', 
-                        'FAQ', 'Key Features', 'Key features', 'Features', 'Version Support', 'Version support', 
-                        'Support', 'Usage', 'License', 'Known Issues', 'Known issues', 'Commands', 'Setup', 
-                        'Getting Started', 'Getting started', 'Settings', 'Configuration', 'Dependencies', 'Roadmap', 
-                        'Development', 'Debugging', 'Testing', 'Details', 'Building', 'Legal', 'Changelog'];
+    const sections = [
+        'table of contents', 'installation', 'examples', 'troubleshooting', 'faq', 'key features',
+        'features', 'version support', 'support', 'usage', 'license', 'known issues', 'commands',
+        'setup', 'getting started', 'settings', 'configuration', 'dependencies', 'roadmap',
+        'development', 'debugging', 'testing', 'details', 'building', 'legal', 'changelog',
+        'introduction', 'overview', 'prerequisites', 'getting help', 'contributing', 'credits',
+        'contact', 'related projects', 'acknowledgements', 'background', 'usage examples',
+        'limitations', 'notes', 'how to contribute', 'maintainers', 'license and copyright',
+        'reference', 'api documentation', 'code of conduct', 'community', 'installation guide'
+    ];
+      
+  
+    // Check if each expected section is present in the content
     for (const section of sections) {
-        if (content.includes(section)) {
-            score++;
-        }
+      if (content.includes(section)) {
+        score++;
+      }
     }
-    // Return a float between 0 and 1
-    logger.info(`Ramp up score: ${score / expectedSections}`);
-    score = score / expectedSections;
-    let rounded_score: number = Math.round(score*100)/100;
-    return rounded_score;
-}
+  
+    // Calculate final score as a fraction of the expected sections found
+    const finalScore = score / sections.length;
+    logger.info(`Ramp up score for ${files[1]}/${files[0]}: ${finalScore}`);
+  
+    return finalScore;
+  }
+  
 function deleteFolder(folderPath: string | undefined) {
     try {
         if (fs.existsSync(folderPath)) {

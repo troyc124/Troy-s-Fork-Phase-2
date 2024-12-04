@@ -7,18 +7,18 @@ import { log } from 'console';
 import { RunProject } from './netScore';
 import { loadEnvFile } from 'process';
 
-const execAsync = promisify(exec);
 
 const program = new Command();
+
+const execAsync = promisify(exec);
 
 async function deleteJSFiles() {
     const srcFolder = './src';
     try {
-        const { stdout, stderr } = await execAsync(`find ${srcFolder} -name "*.js" -type f -delete`);
-        if (stdout) logger.debug(`Deleted .js files: ${stdout}`);
-        if (stderr) logger.debug(`Errors while deleting .js files: ${stderr}`);
+        await execAsync(`find ${srcFolder} -type f \\( -name "*.js" -o -name "*.js.map" \\) -delete`);
+        logger.debug("Deleted all .js and .js.map files in the src folder.");
     } catch (error: any) {
-        logger.debug(`Error deleting .js files: ${error.message}`);
+        logger.debug(`Error deleting .js and .js.map files: ${error.message}`);
     }
 }
 
@@ -77,12 +77,12 @@ program
 
             console.log("Total: " + total);
             console.log("Passed: " + passed);
-            console.log("Coverage: " + coverage + "%");
-            console.log(`${passed}/${total} test cases passed. ${coverage}% line coverage achieved.`);
+            console.log("Coverage: " + Math.round(coverage) + "%");
+            console.log(`${passed}/${total} test cases passed. ${Math.round(coverage)}% line coverage achieved.`);
 
             logger.debug("RC: 0");
             logger.close();
-            process.exit(1); // Success
+            process.exit(0); // Success
         } catch (error: any) {
             logger.info("Error running test cases");
 
@@ -96,12 +96,12 @@ program
             logger.debug(`Test Results:\n${error.stdout}`);
             console.log("Total: " + total);
             console.log("Passed: " + passed);
-            console.log("Coverage: " + coverage + "%");
-            console.log(`${passed}/${total} test cases passed. ${coverage}% line coverage achieved.`);
+            console.log("Coverage: " + Math.round(coverage) + "%");
+            console.log(`${passed}/${total} test cases passed. ${Math.round(coverage)}% line coverage achieved.`);
 
             logger.debug("RC: 1");
             logger.close();
-            process.exit(0); // zero exit code on error ?
+            process.exit(1); // zero exit code on error ?
         }
     });
 
