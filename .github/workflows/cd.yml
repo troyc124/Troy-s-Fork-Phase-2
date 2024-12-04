@@ -94,6 +94,7 @@ jobs:
             git reset --hard origin/main &&
 
             echo 'Setting up .env...' &&
+            rm .env
             touch .env &&
             echo \"AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}\" >> .env &&
             echo \"AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}\" >> .env &&
@@ -103,7 +104,7 @@ jobs:
             ./run install &&
 
             echo 'Compiling TypeScript...' &&
-            node --max-old-space-size=2048 ./node_modules/typescript/bin/tsc --esModuleInterop user-interface/app.ts &&
+            node --max-old-space-size=2048 ./node_modules/typescript/bin/tsc --esModuleInterop user-interface/app.ts --outDir user-interface/dist &&
 
             echo 'Stopping existing app with pm2...' &&
             pm2 stop webapp || true &&
