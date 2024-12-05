@@ -31,6 +31,10 @@ jobs:
           echo "LOG_LEVEL=2" >> .env
           cat .env
 
+      - name: Debug API_KEY
+        run: echo "API_KEY=${{ secrets.API_KEY }}"
+
+
       - name: Verify GITHUB_TOKEN
         run: |
           echo "GITHUB_TOKEN=${{ secrets.API_KEY }}" # Ensure this matches your secret
