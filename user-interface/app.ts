@@ -237,7 +237,14 @@ app.post('/packages', async (req: Request, res: Response): Promise<void> => {
 
 app.delete('/reset', async (req: Request, res: Response): Promise<void> => {
   const authHeader = req.headers['x-authorization'];
+app.delete('/reset', async (req: Request, res: Response): Promise<void> => {
+  const authHeader = req.headers['x-authorization'];
 
+  // Validate Authorization Token
+  if (!authHeader) {
+    res.status(403).send('Authentication failed: missing AuthenticationToken.');
+    return;
+  }
   // Validate Authorization Token
   if (!authHeader) {
     res.status(403).send('Authentication failed: missing AuthenticationToken.');
