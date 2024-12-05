@@ -235,61 +235,61 @@ app.post('/packages', async (req: Request, res: Response): Promise<void> => {
   res.status(200).json(results);
 });
 
-// app.delete('/reset', async (req: Request, res: Response): Promise<void> => {
-//   const authHeader = req.headers['x-authorization'];
+app.delete('/reset', async (req: Request, res: Response): Promise<void> => {
+  const authHeader = req.headers['x-authorization'];
 
-//   // Validate Authorization Token
-//   if (!authHeader) {
-//     res.status(403).send('Authentication failed: missing AuthenticationToken.');
-//     return;
-//   }
+  // Validate Authorization Token
+  if (!authHeader) {
+    res.status(403).send('Authentication failed: missing AuthenticationToken.');
+    return;
+  }
 
   
 
-//   // Reset SQLite Database
-//   const resetDatabase = () => {
-//     return new Promise<void>((resolve, reject) => {
-//       const schemaPath = path.join(__dirname, '../db/schema.sql');
-//       const schemaSQL = fs.readFileSync(schemaPath, 'utf-8');
+  // Reset SQLite Database
+  const resetDatabase = () => {
+    return new Promise<void>((resolve, reject) => {
+      const schemaPath = path.join(__dirname, '../db/schema.sql');
+      const schemaSQL = fs.readFileSync(schemaPath, 'utf-8');
       
-//       db.exec(schemaSQL, (err) => {
-//         if (err) reject(`Error resetting database: ${err.message}`);
-//         else resolve();
-//       });
-//     });
-//   };
+      db.exec(schemaSQL, (err) => {
+        if (err) reject(`Error resetting database: ${err.message}`);
+        else resolve();
+      });
+    });
+  };
 
-//   // Reset S3 Bucket
-//   const resetS3Bucket = async () => {
-//     const s3 = new AWS.S3({ region: 'us-east-1' });
-//     const bucketName = 'team16-npm-registry';
+  // Reset S3 Bucket
+  const resetS3Bucket = async () => {
+    const s3 = new AWS.S3({ region: 'us-east-1' });
+    const bucketName = 'team16-npm-registry';
 
-//     try {
-//       const objects = await s3.listObjectsV2({ Bucket: bucketName }).promise();
-//       if (objects.Contents && objects.Contents.length > 0) {
-//         const deleteParams = {
-//           Bucket: bucketName,
-//           Delete: {
-//             Objects: objects.Contents.map((obj) => ({ Key: obj.Key! })),
-//           },
-//         };
-//         await s3.deleteObjects(deleteParams).promise();
-//       }
-//     } catch (err) {
-//       throw new Error(`Error resetting S3 bucket: ${err.message}`);
-//     }
-//   };
+    try {
+      const objects = await s3.listObjectsV2({ Bucket: bucketName }).promise();
+      if (objects.Contents && objects.Contents.length > 0) {
+        const deleteParams = {
+          Bucket: bucketName,
+          Delete: {
+            Objects: objects.Contents.map((obj) => ({ Key: obj.Key! })),
+          },
+        };
+        await s3.deleteObjects(deleteParams).promise();
+      }
+    } catch (err) {
+      throw new Error(`Error resetting S3 bucket: ${err.message}`);
+    }
+  };
 
-//   // Perform Reset
-//   try {
-//     await resetDatabase();
-//     await resetS3Bucket();
-//     res.status(200).send('Registry is reset.');
-//   } catch (err) {
-//     console.error(err);
-//     res.status(500).send('Error resetting the registry.');
-//   }
-// });
+  // Perform Reset
+  try {
+    await resetDatabase();
+    await resetS3Bucket();
+    res.status(200).send('Registry is reset.');
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Error resetting the registry.');
+  }
+});
 
 
 
