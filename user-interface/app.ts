@@ -7,7 +7,7 @@ import { uploadS3 } from './routes/uploadS3';
 import fs from 'fs';
 import semver from 'semver';
 import * as AWS from 'aws-sdk';
-
+import base64 from 'base64-js';
 
 
 const app = express();
@@ -24,6 +24,71 @@ const db = new sqlite3.Database(dbPath, (err) => {
     console.log(`Connected to the database at ${dbPath}`);
   }
 });
+
+
+app.get('/package/:id', async (req: Request, res: Response): Promise<void> => {
+  const { id } = req.params;
+  const bucketName = 'team16-npm-registry';
+  const s3 = new AWS.S3({ region: 'us-east-1' });
+
+  try {
+    const [name, version] = id.split('/');
+    const prefix = `${name}/${version}/`;
+
+    // List objects under the prefix
+    const data = await s3
+      .listObjectsV2({
+        Bucket: bucketName,
+        Prefix: prefix,
+      })
+      .promise();
+
+    if (!data.Contents || data.Contents.length === 0) {
+      res.status(404).send('Package does not exist');
+      return;
+    }
+
+    // Get the first file in the directory
+    const fileKey = data.Contents[0].Key;
+    console.log(`Found File Key: ${fileKey}`);
+
+    // Retrieve the file from S3
+    const s3Object = await s3
+      .getObject({
+        Bucket: bucketName,
+        Key: fileKey!,
+      })
+      .promise();
+
+    if (!s3Object.Body) {
+      res.status(404).send('Package does not exist');
+      return;
+    }
+
+    // Convert the file content
+    const fileBuffer = s3Object.Body as Buffer;
+    const base64Content = fileBuffer.toString('base64');
+
+    // Check if it's a text file or JavaScript
+    const textContent = fileBuffer.toString('utf8'); // Decode as plain text
+
+    // Prepare the response
+    const metadata = { Name: name, Version: version, ID: name };
+    const dataResponse = {
+      Content: base64Content, // Base64 representation
+      JSProgram: textContent.includes('function') || textContent.includes('console') ? textContent : 'Not applicable', // Plain text representation if applicable
+    };
+
+    res.status(200).json({ metadata, data: dataResponse });
+  } catch (err) {
+    console.error('Error retrieving package:', err);
+    res.status(500).send('Internal server error');
+  }
+});
+
+
+
+
 
 // Middleware setup
 app.use(fileUpload());
@@ -224,6 +289,8 @@ app.post('/packages', async (req: Request, res: Response): Promise<void> => {
       return;
     }
   }
+
+  
 
   if (results.length === 0) {
     res.status(404).send('No matching packages found');
