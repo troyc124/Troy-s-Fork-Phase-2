@@ -11,7 +11,7 @@ import * as AWS from 'aws-sdk';
 
 
 const app = express();
-const PORT = 3001;
+const PORT = 3000;
 
 let server: any; // Define a variable to hold the server instance
 
