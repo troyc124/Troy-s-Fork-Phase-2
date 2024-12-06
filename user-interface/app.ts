@@ -10,6 +10,7 @@ import * as AWS from 'aws-sdk';
 import base64 from 'base64-js';
 
 
+
 const app = express();
 const PORT = 3000;
 
@@ -68,15 +69,14 @@ app.get('/package/:id', async (req: Request, res: Response): Promise<void> => {
     // Convert the file content
     const fileBuffer = s3Object.Body as Buffer;
     const base64Content = fileBuffer.toString('base64');
-
-    // Check if it's a text file or JavaScript
-    const textContent = fileBuffer.toString('utf8'); // Decode as plain text
+    const textContent = fileBuffer.toString('utf-8'); // Use if it's a text file like .js or .cpp
 
     // Prepare the response
     const metadata = { Name: name, Version: version, ID: name };
     const dataResponse = {
       Content: base64Content, // Base64 representation
-      JSProgram: textContent.includes('function') || textContent.includes('console') ? textContent : 'Not applicable', // Plain text representation if applicable
+      JSProgram: textContent, // Plain text representation
+      debloat: false // Example static value; adjust logic if required
     };
 
     res.status(200).json({ metadata, data: dataResponse });
@@ -85,8 +85,6 @@ app.get('/package/:id', async (req: Request, res: Response): Promise<void> => {
     res.status(500).send('Internal server error');
   }
 });
-
-
 
 
 
@@ -301,6 +299,49 @@ app.post('/packages', async (req: Request, res: Response): Promise<void> => {
   res.setHeader('offset', `${offsetValue + results.length}`);
   res.status(200).json(results);
 });
+
+app.post('/package', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { metadata, data } = req.body;
+
+    // Validate metadata fields
+    if (!metadata || !metadata.Name || !metadata.Version || !metadata.ID) {
+      res.status(400).send('Missing required metadata fields');
+      console.error('Metadata validation failed:', metadata);
+      return;
+    }
+
+    // Validate data fields
+    if (!data || (!data.Content && !data.URL)) {
+      res.status(400).send('Missing required data fields (Content or URL)');
+      console.error('Data validation failed:', data);
+      return;
+    }
+
+    // Log inputs for debugging
+    console.log('Received metadata:', metadata);
+    console.log('Received data:', data);
+
+    // Ensure the JSProgram field is directly passed without transformation
+    const formattedJSProgram = data.JSProgram || null;
+
+    // Respond with success
+    res.status(200).json({
+      metadata,
+      data: {
+        Content: data.Content || null,
+        URL: data.URL || null,
+        JSProgram: formattedJSProgram, // No transformation applied
+      },
+    });
+  } catch (err) {
+    console.error('Error processing package:', err);
+    res.status(500).send('Internal server error');
+  }
+});
+
+
+
 
 
 
