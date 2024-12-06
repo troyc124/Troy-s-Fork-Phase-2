@@ -300,46 +300,49 @@ app.post('/packages', async (req: Request, res: Response): Promise<void> => {
   res.status(200).json(results);
 });
 
-
 app.post('/package', async (req: Request, res: Response): Promise<void> => {
   try {
-    const { metadata, data } = req.body;
+    const { Content, JSProgram, debloat = false, Name } = req.body;
 
-    // Validate metadata fields
-    if (!metadata || !metadata.Name || !metadata.Version || !metadata.ID) {
-      res.status(400).send('Missing required metadata fields');
-      console.error('Metadata validation failed:', metadata);
+    // Validate required fields
+    if (!Name) {
+      res.status(400).send('Missing required field: Name');
       return;
     }
 
-    // Validate data fields
-    if (!data || (!data.Content && !data.URL)) {
-      res.status(400).send('Missing required data fields (Content or URL)');
-      console.error('Data validation failed:', data);
+    if (!Content && !JSProgram) {
+      res.status(400).send('Missing required field: Content or JSProgram');
       return;
     }
 
-    // Log inputs for debugging
-    console.log('Received metadata:', metadata);
-    console.log('Received data:', data);
+    if (Content && JSProgram) {
+      res.status(400).send('Invalid request: Only one of Content or JSProgram should be set');
+      return;
+    }
 
-    // Ensure the JSProgram field is directly passed without transformation
-    const formattedJSProgram = data.JSProgram || null;
+    const tempFilePath = path.join(__dirname, `${Name}_temp_file`);
+    fs.writeFileSync(tempFilePath, Content || JSProgram);
 
-    // Respond with success
-    res.status(200).json({
-      metadata,
-      data: {
-        Content: data.Content || null,
-        URL: data.URL || null,
-        JSProgram: formattedJSProgram, // No transformation applied
-      },
-    });
+    const bucketName = 'team16-npm-registry';
+    const key = `${Name}/1.0.0/package.json`;
+
+    try {
+      const result = await uploadS3(tempFilePath, bucketName, key);
+      fs.unlinkSync(tempFilePath);
+      res.status(201).json({ message: 'Package uploaded successfully', result });
+    } catch (err) {
+      console.error('Upload error:', err);
+      fs.unlinkSync(tempFilePath);
+      res.status(500).send('Error uploading to S3');
+    }
   } catch (err) {
-    console.error('Error processing package:', err);
+    console.error('Error:', err);
     res.status(500).send('Internal server error');
   }
 });
+
+
+
 
 app.delete('/reset', async (req: Request, res: Response): Promise<void> => {
   const authHeader = req.headers['x-authorization'];
