@@ -341,10 +341,6 @@ app.post('/package', async (req: Request, res: Response): Promise<void> => {
   }
 });
 
-
-
-
-=======
 app.delete('/reset', async (req: Request, res: Response): Promise<void> => {
   const authHeader = req.headers['x-authorization'];
 
