@@ -246,16 +246,6 @@ async function fetchNpmPackage(packageName: string, version: string): Promise<st
   const extractDir = path.join(__dirname, `${packageName}-${version}`);
   await tar.x({ file: tarballPath, cwd: extractDir });
 
-
-    try {
-      // List objects in S3 under the specified prefix
-      const data = await s3
-        .listObjectsV2({
-          Bucket: bucketName,
-          Prefix: prefix
-        })
-        .promise();
-
   return extractDir;
 }
 
