@@ -333,3 +333,109 @@
 2024-10-21 16:17:02 [INFO]: Folder ./cloudinary_npm-master has been deleted.
 2024-10-21 16:17:02 [INFO]: Ramp up score for https://github.com/cloudinary/cloudinary_npm: 0.38
 2024-10-21 16:17:02 [INFO]: Ramp up score for https://github.com/cloudinary/cloudinary_npm: 0.38
+2024-12-06 00:11:47 [INFO]: Successfully fetched repository: cloudinary/cloudinary_npm
+2024-12-06 00:11:47 [INFO]: Downloading repository from https://github.com/cloudinary/cloudinary_npm to ./
+2024-12-06 00:11:47 [INFO]: Fetching default branch for https://github.com/cloudinary/cloudinary_npm
+2024-12-06 00:11:48 [INFO]: Default branch: master
+2024-12-06 00:11:48 [INFO]: Repository name: cloudinary_npm
+2024-12-06 00:11:48 [INFO]: Path and default branch: ./cloudinary_npm-master
+2024-12-06 00:11:48 [INFO]: Download URL: https://github.com/cloudinary/cloudinary_npm/archive/master.zip
+2024-12-06 00:11:52 [INFO]: Repository zip fetched
+2024-12-06 00:11:52 [INFO]: Repository zip saved
+2024-12-06 00:11:52 [INFO]: Repository downloaded and extracted to ./
+2024-12-06 00:11:52 [INFO]: Repository zip deleted
+2024-12-06 00:11:52 [INFO]: Repository downloaded and extracted to ./
+2024-12-06 00:11:52 [INFO]: files: README.md,/home/anja/Desktop/461/Phase-2/p2-anja/
+2024-12-06 00:11:52 [INFO]: Ramp up score for /home/anja/Desktop/461/Phase-2/p2-anja//README.md: 0.2553191489361702
+2024-12-06 00:11:52 [INFO]: Folder ./cloudinary_npm-master has been deleted.
+2024-12-06 00:11:52 [INFO]: Ramp up score for cloudinary/https://github.com/cloudinary/cloudinary_npm: 0.2553191489361702
+2024-12-06 00:11:53 [ERROR]: Error getting bus factor: Invalid arguments
+2024-12-06 00:11:53 [INFO]: Fetching issues for repo: cloudinary/cloudinary_npm
+2024-12-06 00:11:53 [INFO]: Error fetching issues
+2024-12-06 00:11:53 [INFO]: Error fetching and calculating responsive maintainer
+2024-12-06 00:11:54 [INFO]: Processing repository: cloudinary/cloudinary_npm
+2024-12-06 00:11:54 [INFO]: Net Score for cloudinary/cloudinary_npm: 0.05106382978723404
+2024-12-06 00:11:54 [INFO]: Net Score Latency: 6.930 seconds
+2024-12-06 00:11:54 [INFO]: Fetched npm package: express
+2024-12-06 00:11:54 [INFO]: Successfully fetched repository: expressjs/express
+2024-12-06 00:11:54 [INFO]: Downloading repository from https://www.npmjs.com/package/express to ./
+2024-12-06 00:11:54 [INFO]: Fetching default branch for https://www.npmjs.com/package/express
+2024-12-06 00:11:55 [INFO]: Default branch: undefined
+2024-12-06 00:11:55 [INFO]: Repository name: express
+2024-12-06 00:11:55 [INFO]: Path and default branch: ./express-undefined
+2024-12-06 00:11:55 [INFO]: Download URL: https://www.npmjs.com/package/express/archive/undefined.zip
+2024-12-06 00:11:57 [INFO]: files: README.md,/home/anja/Desktop/461/Phase-2/p2-anja/
+2024-12-06 00:11:57 [INFO]: Ramp up score for /home/anja/Desktop/461/Phase-2/p2-anja//README.md: 0.2553191489361702
+2024-12-06 00:11:57 [INFO]: Folder undefined does not exist.
+2024-12-06 00:11:57 [INFO]: Ramp up score for expressjs/https://www.npmjs.com/package/express: 0.2553191489361702
+2024-12-06 00:11:57 [ERROR]: Error getting bus factor: Invalid arguments
+2024-12-06 00:11:57 [INFO]: Fetching issues for repo: expressjs/express
+2024-12-06 00:11:57 [INFO]: Error fetching issues
+2024-12-06 00:11:57 [INFO]: Error fetching and calculating responsive maintainer
+2024-12-06 00:11:58 [INFO]: Processing repository: expressjs/express
+2024-12-06 00:11:58 [INFO]: Net Score for expressjs/express: 0.05106382978723404
+2024-12-06 00:11:58 [INFO]: Net Score Latency: 3.750 seconds
+2024-12-06 00:11:58 [INFO]: Successfully fetched repository: nullivex/nodist
+2024-12-06 00:11:58 [INFO]: Downloading repository from https://github.com/nullivex/nodist to ./
+2024-12-06 00:11:58 [INFO]: Fetching default branch for https://github.com/nullivex/nodist
+2024-12-06 00:11:59 [INFO]: Default branch: master
+2024-12-06 00:11:59 [INFO]: Repository name: nodist
+2024-12-06 00:11:59 [INFO]: Path and default branch: ./nodist-master
+2024-12-06 00:11:59 [INFO]: Download URL: https://github.com/nullivex/nodist/archive/master.zip
+2024-12-06 00:12:00 [INFO]: Repository zip fetched
+2024-12-06 00:12:00 [INFO]: Repository zip saved
+2024-12-06 00:12:00 [INFO]: Repository downloaded and extracted to ./
+2024-12-06 00:12:00 [INFO]: Repository zip deleted
+2024-12-06 00:12:00 [INFO]: Repository downloaded and extracted to ./
+2024-12-06 00:12:00 [INFO]: files: README.md,/home/anja/Desktop/461/Phase-2/p2-anja/
+2024-12-06 00:12:00 [INFO]: Ramp up score for /home/anja/Desktop/461/Phase-2/p2-anja//README.md: 0.2553191489361702
+2024-12-06 00:12:00 [INFO]: Folder ./nodist-master has been deleted.
+2024-12-06 00:12:00 [INFO]: Ramp up score for nullivex/https://github.com/nullivex/nodist: 0.2553191489361702
+2024-12-06 00:12:00 [ERROR]: Error getting bus factor: Invalid arguments
+2024-12-06 00:12:00 [INFO]: Fetching issues for repo: nullivex/nodist
+2024-12-06 00:12:00 [INFO]: Error fetching issues
+2024-12-06 00:12:00 [INFO]: Error fetching and calculating responsive maintainer
+2024-12-06 00:12:01 [INFO]: Processing repository: nullivex/nodist
+2024-12-06 00:12:01 [INFO]: Net Score for nullivex/nodist: 0.05106382978723404
+2024-12-06 00:12:01 [INFO]: Net Score Latency: 2.991 seconds
+2024-12-06 00:12:01 [INFO]: Successfully fetched repository: lodash/lodash
+2024-12-06 00:12:01 [INFO]: Downloading repository from https://github.com/lodash/lodash to ./
+2024-12-06 00:12:01 [INFO]: Fetching default branch for https://github.com/lodash/lodash
+2024-12-06 00:12:01 [INFO]: Default branch: main
+2024-12-06 00:12:01 [INFO]: Repository name: lodash
+2024-12-06 00:12:01 [INFO]: Path and default branch: ./lodash-main
+2024-12-06 00:12:01 [INFO]: Download URL: https://github.com/lodash/lodash/archive/main.zip
+2024-12-06 00:12:02 [INFO]: Repository zip fetched
+2024-12-06 00:12:02 [INFO]: Repository zip saved
+2024-12-06 00:12:02 [INFO]: Repository downloaded and extracted to ./
+2024-12-06 00:12:02 [INFO]: Repository zip deleted
+2024-12-06 00:12:02 [INFO]: Repository downloaded and extracted to ./
+2024-12-06 00:12:02 [INFO]: files: README.md,/home/anja/Desktop/461/Phase-2/p2-anja/
+2024-12-06 00:12:02 [INFO]: Ramp up score for /home/anja/Desktop/461/Phase-2/p2-anja//README.md: 0.2553191489361702
+2024-12-06 00:12:02 [INFO]: Folder ./lodash-main has been deleted.
+2024-12-06 00:12:02 [INFO]: Ramp up score for lodash/https://github.com/lodash/lodash: 0.2553191489361702
+2024-12-06 00:12:03 [ERROR]: Error getting bus factor: Invalid arguments
+2024-12-06 00:12:03 [INFO]: Fetching issues for repo: lodash/lodash
+2024-12-06 00:12:03 [INFO]: Error fetching issues
+2024-12-06 00:12:03 [INFO]: Error fetching and calculating responsive maintainer
+2024-12-06 00:12:04 [INFO]: Processing repository: lodash/lodash
+2024-12-06 00:12:04 [INFO]: Net Score for lodash/lodash: 0.05106382978723404
+2024-12-06 00:12:04 [INFO]: Net Score Latency: 2.808 seconds
+2024-12-06 00:12:04 [INFO]: Fetched npm package: browserify
+2024-12-06 00:12:04 [INFO]: Successfully fetched repository: browserify/browserify
+2024-12-06 00:12:04 [INFO]: Downloading repository from https://www.npmjs.com/package/browserify to ./
+2024-12-06 00:12:04 [INFO]: Fetching default branch for https://www.npmjs.com/package/browserify
+2024-12-06 00:12:04 [INFO]: Default branch: undefined
+2024-12-06 00:12:04 [INFO]: Repository name: browserify
+2024-12-06 00:12:04 [INFO]: Path and default branch: ./browserify-undefined
+2024-12-06 00:12:04 [INFO]: Download URL: https://www.npmjs.com/package/browserify/archive/undefined.zip
+2024-12-06 00:12:05 [INFO]: files: README.md,/home/anja/Desktop/461/Phase-2/p2-anja/
+2024-12-06 00:12:05 [INFO]: Ramp up score for /home/anja/Desktop/461/Phase-2/p2-anja//README.md: 0.2553191489361702
+2024-12-06 00:12:05 [INFO]: Folder undefined does not exist.
+2024-12-06 00:12:05 [INFO]: Ramp up score for browserify/https://www.npmjs.com/package/browserify: 0.2553191489361702
+2024-12-06 00:12:05 [ERROR]: Error getting bus factor: Invalid arguments
+2024-12-06 00:12:05 [INFO]: Fetching issues for repo: browserify/browserify
+2024-12-06 00:12:05 [INFO]: Error fetching issues
+2024-12-06 00:12:05 [INFO]: Error fetching and calculating responsive maintainer
+2024-12-06 00:12:06 [INFO]: Processing repository: browserify/browserify
+2024-12-06 00:12:06 [INFO]: Net Score for browserify/browserify: 0.05106382978723404

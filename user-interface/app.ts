@@ -275,6 +275,42 @@ async function cleanupFiles() {
   }
 }
 
+// Fetch version from npm registry
+async function getNpmPackageVersion(packageName: string, specifiedVersion?: string): Promise<string> {
+  try {
+    const npmUrl = `https://registry.npmjs.org/${packageName}`;
+    const response = await axios.get(npmUrl);
+
+    if (specifiedVersion && response.data.versions[specifiedVersion]) {
+      return specifiedVersion;
+    }
+
+    return response.data['dist-tags'].latest; // Default to latest version
+  } catch (err) {
+    console.error(`Error fetching npm version for ${packageName}:`, err);
+    return '1.0.0'; // Fallback version
+  }
+}
+
+// Fetch version from GitHub releases
+async function getGitHubRepoVersion(repoUrl: string): Promise<string> {
+  try {
+    const repoPath = repoUrl.replace('https://github.com/', '').replace('.git', '');
+    const [owner, repo] = repoPath.split('/');
+
+    const githubApiUrl = `https://api.github.com/repos/${owner}/${repo}/releases/latest`;
+    const response = await axios.get(githubApiUrl, {
+      headers: { 'User-Agent': 'request' }, // Required by GitHub API
+    });
+
+    return response.data.tag_name || '1.0.0'; // Use tag_name or fallback
+  } catch (err) {
+    console.error(`Error fetching GitHub version for ${repoUrl}:`, err);
+    return '1.0.0'; // Fallback version
+  }
+}
+
+// Updated /package endpoint
 app.post('/package', async (req: Request, res: Response): Promise<void> => {
   try {
     const { Name, URL, JSProgram } = req.body;
@@ -285,13 +321,16 @@ app.post('/package', async (req: Request, res: Response): Promise<void> => {
     }
 
     let packageDir = '';
+    let version = '1.0.0'; // Default version
 
     if (URL) {
       if (URL.includes('github.com')) {
         packageDir = await cloneGitHubRepo(URL);
+        version = await getGitHubRepoVersion(URL);
       } else if (URL.includes('npmjs.com')) {
         const packageName = Name.split('@')[0];
-        const version = Name.split('@')[1] || 'latest';
+        const specifiedVersion = Name.split('@')[1];
+        version = await getNpmPackageVersion(packageName, specifiedVersion);
         packageDir = await fetchNpmPackage(packageName, version);
       } else {
         res.status(400).send('Invalid URL. Only GitHub and npm URLs are supported.');
@@ -312,17 +351,17 @@ app.post('/package', async (req: Request, res: Response): Promise<void> => {
     await archive.finalize();
 
     const bucketName = 'team16-npm-registry';
-    const key = `${Name}/1.0.0/package.zip`;
+    const key = `${Name}/${version}/package.zip`;
 
     try {
       const result = await uploadS3(zipFilePath, bucketName, key);
 
       // Cleanup
-      await fsp.rm(zipFilePath, { force: true }); // Remove the zip file
-      await fsp.rm(packageDir, { recursive: true, force: true }); // Remove the directory
+      await fsp.rm(zipFilePath, { force: true });
+      await fsp.rm(packageDir, { recursive: true, force: true });
 
       res.status(201).json({
-        metadata: { Name, Version: '1.0.0', ID: Name },
+        metadata: { Name, Version: version, ID: Name },
         data: {
           URL,
           JSProgram: JSProgram || null,
@@ -331,8 +370,8 @@ app.post('/package', async (req: Request, res: Response): Promise<void> => {
       });
     } catch (err) {
       console.error('Upload error:', err);
-      await fsp.rm(zipFilePath, { force: true }); // Ensure zip is deleted
-      await fsp.rm(packageDir, { recursive: true, force: true }); // Ensure directory is deleted
+      await fsp.rm(zipFilePath, { force: true });
+      await fsp.rm(packageDir, { recursive: true, force: true });
       res.status(500).send('Error uploading to S3');
     }
   } catch (err) {
@@ -340,22 +379,6 @@ app.post('/package', async (req: Request, res: Response): Promise<void> => {
     res.status(500).send('Internal server error');
   }
 });
-
-
-
-async function zipContent(content: string, name: string): Promise<Buffer> {
-  return new Promise((resolve, reject) => {
-    const archive = archiver('zip', { zlib: { level: 9 } });
-    const buffers: Buffer[] = [];
-    
-    archive.on('data', (data) => buffers.push(data));
-    archive.on('end', () => resolve(Buffer.concat(buffers)));
-    archive.on('error', (err) => reject(err));
-    
-    archive.append(content, { name: `${name}.txt` });
-    archive.finalize();
-  });
-}
 
 // app.post('/package', async (req: Request, res: Response): Promise<void> => {
 //   try {
