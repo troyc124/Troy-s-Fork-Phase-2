@@ -311,6 +311,25 @@ async function getGitHubRepoVersion(repoUrl: string): Promise<string> {
 }
 
 // POST Package endpoint
+import unzipper from 'unzipper'; // Install with `npm install unzipper`
+
+// Function to parse URL from ZIP content
+async function extractURLFromZIP(buffer: Buffer): Promise<string> {
+  try {
+    const directory = await unzipper.Open.buffer(buffer);
+    const file = directory.files.find((file) => file.path === 'package.json'); // Look for package.json
+
+    if (file) {
+      const content = await file.buffer(); // Read file content
+      const parsed = JSON.parse(content.toString()); // Parse JSON
+      return parsed.repository?.url || ''; // Return repository URL if available
+    }
+  } catch (err) {
+    console.error('Error extracting URL from ZIP:', err);
+  }
+  return ''; // Return empty string if URL is not found
+}
+
 app.post('/package', async (req: Request, res: Response) => {
   try {
     const { Name, URL, JSProgram, Content } = req.body;
@@ -334,7 +353,6 @@ app.post('/package', async (req: Request, res: Response) => {
     }
 
     // Validate Name
-
     if (!packageName || typeof packageName !== 'string' || /[^a-zA-Z0-9\-]/.test(packageName)) {
       res.status(400).send('Invalid or missing Name. Only alphanumeric characters or hyphens are allowed.');
       return;
@@ -346,6 +364,7 @@ app.post('/package', async (req: Request, res: Response) => {
     }
 
     // Validate Content
+    let extractedURL = '';
     if (Content) {
       if (typeof Content !== 'string' || !/^[A-Za-z0-9+/=]+$/.test(Content)) {
         res.status(400).send('Invalid Content. Must be a Base64-encoded ZIP.');
@@ -363,6 +382,9 @@ app.post('/package', async (req: Request, res: Response) => {
         const zipFilePath = path.join(__dirname, `${packageName}.zip`);
         await fsp.writeFile(zipFilePath, buffer);
 
+        // Extract URL from ZIP content
+        extractedURL = await extractURLFromZIP(buffer);
+
         // Upload to S3
         const result = await uploadS3(zipFilePath, 'team16-npm-registry', `${packageName}/1.0.0/package.zip`);
 
@@ -370,8 +392,16 @@ app.post('/package', async (req: Request, res: Response) => {
         await fsp.rm(zipFilePath, { force: true });
 
         res.status(201).json({
-          message: 'Content uploaded successfully.',
-          metadata: { Name: packageName, ID: packageName.toLowerCase(), Version: '1.0.0' },
+          metadata: {
+            Name: packageName,  // Use actual package name
+            Version: '1.0.0',   // Default version
+            ID: packageName.toLowerCase(), // Normalized ID
+          },
+          data: {
+            Content: Content,   // Include the Base64 content
+            URL: extractedURL,  // Include the extracted URL or empty string
+            JSProgram: JSProgram || null, // Include JSProgram if provided
+          },
         });
       } catch (err) {
         console.error('Error handling Content:', err);
@@ -386,6 +416,7 @@ app.post('/package', async (req: Request, res: Response) => {
     res.status(500).send('Internal server error.');
   }
 });
+
 
 // app.post('/package', async (req: Request, res: Response): Promise<void> => {
 //   try {
