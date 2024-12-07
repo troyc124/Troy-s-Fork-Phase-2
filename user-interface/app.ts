@@ -15,6 +15,9 @@ import axios from 'axios';
 import archiver from 'archiver';
 import { exec } from 'child_process';
 import tar from 'tar';
+
+
+// import { promises as fsp } from 'fs';
 // import fs from 'fs/promises';
 // import rimraf from 'rimraf';
 // import { promisify } from 'util';
@@ -312,79 +315,62 @@ async function getGitHubRepoVersion(repoUrl: string): Promise<string> {
   }
 }
 
-// Updated /package endpoint
-app.post('/package', async (req: Request, res: Response): Promise<void> => {
+// POST Package endpoint
+app.post('/package', async (req: Request, res: Response) => {
   try {
-    const { Name, URL, JSProgram, Content } = req.body;
-
-    let packageName = Name;
-
-    // Extract Name from URL if not provided
-    if (!packageName && URL) {
-      try {
-        if (URL.includes('github.com')) {
-          const repoPath = URL.replace('https://github.com/', '').split('/');
-          if (repoPath.length > 1) {
-            packageName = repoPath[1].replace('.git', '');
-          }
-        } else {
-          res.status(400).send('Invalid URL. Only GitHub URLs are supported.');
-          return;
-        }
-      } catch (err) {
-        res.status(400).send('Unable to extract Name from URL.');
-        return;
-      }
-    }
+    const { Name, URL, JSProgram } = req.body;
 
     // Validate Name
-    if (!packageName || typeof packageName !== 'string' || /[^a-zA-Z0-9\-]/.test(packageName)) {
+    if (!Name || typeof Name !== 'string' || /[^a-zA-Z0-9\-]/.test(Name)) {
       res.status(400).send('Invalid or missing Name. Name must contain only alphanumeric characters or hyphens.');
       return;
     }
 
-    if (packageName === '*') {
+    if (Name === '*') {
       res.status(400).send('The name "*" is reserved.');
       return;
     }
 
-    // Validate Version (Required)
-    const version = '1.0.0'; // Default version, can be dynamic if needed
+    // Validate Version (Default)
+    const version = '1.0.0';
 
     // Validate ID
-    const id = packageName.toLowerCase().replace(/[^a-z0-9\-]/g, '-'); // Normalize Name to match ID requirements
+    const id = Name.toLowerCase().replace(/[^a-z0-9\-]/g, '-');
 
-    // S3 Configuration
     const bucketName = 'team16-npm-registry';
-    const key = `${id}/${version}/package.zip`;
-    const zipFilePath = path.join(__dirname, `${id}.zip`);
 
-    if (Content) {
+    // Handle Content (File Upload)
+    const file = req.files?.content as fileUpload.UploadedFile;
+
+    if (file) {
+      const zipFilePath = path.join(__dirname, `${id}.zip`);
       try {
-        // Decode base64 content and save as ZIP file
-        const buffer = Buffer.from(Content, 'base64');
-        await fsp.writeFile(zipFilePath, buffer);
+        // Move uploaded file to the target location
+        await file.mv(zipFilePath);
 
-        // Upload ZIP file to S3
+        // Upload the file to S3
+        const key = `${id}/${version}/package.zip`;
         const result = await uploadS3(zipFilePath, bucketName, key);
 
         // Cleanup
-        await fsp.rm(zipFilePath, { force: true });
+        await fs.promises.rm(zipFilePath, { force: true });
 
         // Response
         res.status(201).json({
-          metadata: { Name: packageName, Version: version, ID: id },
-          data: { Content, JSProgram: JSProgram || null },
+          metadata: { Name, Version: version, ID: id },
+          data: { Content: 'Uploaded via file', JSProgram: JSProgram || null },
         });
         return;
       } catch (err) {
-        console.error('Error handling Content upload:', err);
-        res.status(500).send('Error processing Content upload.');
+        console.error('Error handling file upload:', err);
+        res.status(500).send('Error processing file upload.');
         return;
       }
     }
 
+    // Handle URL (Cloning Repository)
     if (URL) {
+      const zipFilePath = path.join(__dirname, `${id}.zip`);
       let packageDir = '';
       try {
         if (URL.includes('github.com')) {
@@ -394,28 +380,28 @@ app.post('/package', async (req: Request, res: Response): Promise<void> => {
           return;
         }
 
-        // Zip the package contents
+        // Zip the cloned repository
+        const archive = archiver('zip', { zlib: { level: 9 } });
         const output = fs.createWriteStream(zipFilePath);
-        const archive = new archiver('zip', { zlib: { level: 9 } });
 
         archive.pipe(output);
         archive.directory(packageDir, false);
         await archive.finalize();
 
-        // Convert ZIP to base64
-        const contentBuffer = await fsp.readFile(zipFilePath);
+        // Convert the ZIP file to base64
+        const contentBuffer = await fs.promises.readFile(zipFilePath);
         const base64Content = contentBuffer.toString('base64');
 
         // Upload ZIP file to S3
+        const key = `${id}/${version}/package.zip`;
         const result = await uploadS3(zipFilePath, bucketName, key);
 
         // Cleanup
-        await fsp.rm(zipFilePath, { force: true });
-        await fsp.rm(packageDir, { recursive: true, force: true });
+        await fs.promises.rm(zipFilePath, { force: true });
+        await fs.promises.rm(packageDir, { recursive: true, force: true });
 
-        // Response
         res.status(201).json({
-          metadata: { Name: packageName, Version: version, ID: id },
+          metadata: { Name, Version: version, ID: id },
           data: { Content: base64Content, URL, JSProgram: JSProgram || null },
         });
         return;
@@ -432,9 +418,6 @@ app.post('/package', async (req: Request, res: Response): Promise<void> => {
     res.status(500).send('Internal server error.');
   }
 });
-
-
-
 
 
 
