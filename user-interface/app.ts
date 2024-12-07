@@ -507,15 +507,11 @@ app.delete('/reset', async (req: Request, res: Response): Promise<void> => {
   const authHeader = req.headers['x-authorization'];
 
   // Validate Authorization Token
-  if (!authHeader) {
-    res.status(403).send('Authentication failed: missing AuthenticationToken.');
-    return;
-  }
-  // Validate Authorization Token
-  if (!authHeader) {
-    res.status(403).send('Authentication failed: missing AuthenticationToken.');
-    return;
-  }
+  // if (!authHeader) {
+  //   res.status(403).send('Authentication failed: missing AuthenticationToken.');
+  //   return;
+  // }
+
 
   
 
@@ -602,7 +598,7 @@ app.get('/tracks', (req: Request, res: Response) => {
 });
 
 
-app.post('/packages/byRegEx', async (req: Request, res: Response): Promise<void> => {
+app.post('/package/byRegEx', async (req: Request, res: Response): Promise<void> => {
   const { RegEx } = req.body; // Regular expression from the request body
 
   // Validate the RegEx field
