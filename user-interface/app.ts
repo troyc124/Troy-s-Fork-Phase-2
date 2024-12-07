@@ -15,6 +15,9 @@ import axios from 'axios';
 import archiver from 'archiver';
 import { exec } from 'child_process';
 import tar from 'tar';
+
+
+// import { promises as fsp } from 'fs';
 // import fs from 'fs/promises';
 // import rimraf from 'rimraf';
 // import { promisify } from 'util';
@@ -312,8 +315,8 @@ async function getGitHubRepoVersion(repoUrl: string): Promise<string> {
   }
 }
 
-// Updated /package endpoint
-app.post('/package', async (req: Request, res: Response): Promise<void> => {
+// POST Package endpoint
+app.post('/package', async (req: Request, res: Response) => {
   try {
     const { Name, URL, JSProgram, Content } = req.body;
 
@@ -338,6 +341,7 @@ app.post('/package', async (req: Request, res: Response): Promise<void> => {
     }
 
     // Validate Name
+
     if (!packageName || typeof packageName !== 'string' || /[^a-zA-Z0-9\-]/.test(packageName)) {
       res.status(400).send('Invalid or missing Name. Name must contain only alphanumeric characters or hyphens.');
       return;
@@ -432,11 +436,6 @@ app.post('/package', async (req: Request, res: Response): Promise<void> => {
     res.status(500).send('Internal server error.');
   }
 });
-
-
-
-
-
 
 // app.post('/package', async (req: Request, res: Response): Promise<void> => {
 //   try {
