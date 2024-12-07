@@ -15,12 +15,7 @@ import axios from 'axios';
 import archiver from 'archiver';
 import { exec } from 'child_process';
 import tar from 'tar';
-
-
-// import { promises as fsp } from 'fs';
-// import fs from 'fs/promises';
-// import rimraf from 'rimraf';
-// import { promisify } from 'util';
+import fsp from 'fs/promises'; // For file system promises
 
 const app = express();
 const PORT = 3000;
@@ -101,8 +96,8 @@ app.get('/package/:id', async (req: Request, res: Response): Promise<void> => {
 
 // Middleware setup
 app.use(fileUpload());
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({limit: '10mb'}));
+app.use(express.urlencoded({ limit: '10mb', extended: true }));
 
 // Static files setup
 const projectRoot = path.resolve(__dirname, '..');
@@ -269,7 +264,7 @@ async function cloneGitHubRepo(repoUrl: string): Promise<string> {
 
 // Access fs.promises for async methods
 // import fs from 'fs';
-import { promises as fsp } from 'fs';
+// import { promises as fsp } from 'fs';
 
 async function cleanupFiles() {
   try {
@@ -324,18 +319,16 @@ app.post('/package', async (req: Request, res: Response) => {
 
     // Extract Name from URL if not provided
     if (!packageName && URL) {
-      try {
-        if (URL.includes('github.com')) {
-          const repoPath = URL.replace('https://github.com/', '').split('/');
-          if (repoPath.length > 1) {
-            packageName = repoPath[1].replace('.git', '');
-          }
+      if (URL.includes('github.com')) {
+        const repoPath = URL.replace('https://github.com/', '').split('/');
+        if (repoPath.length > 1) {
+          packageName = repoPath[1].replace('.git', '');
         } else {
-          res.status(400).send('Invalid URL. Only GitHub URLs are supported.');
+          res.status(400).send('Invalid GitHub URL format.');
           return;
         }
-      } catch (err) {
-        res.status(400).send('Unable to extract Name from URL.');
+      } else {
+        res.status(400).send('Invalid URL. Only GitHub URLs are supported.');
         return;
       }
     }
@@ -343,7 +336,7 @@ app.post('/package', async (req: Request, res: Response) => {
     // Validate Name
 
     if (!packageName || typeof packageName !== 'string' || /[^a-zA-Z0-9\-]/.test(packageName)) {
-      res.status(400).send('Invalid or missing Name. Name must contain only alphanumeric characters or hyphens.');
+      res.status(400).send('Invalid or missing Name. Only alphanumeric characters or hyphens are allowed.');
       return;
     }
 
@@ -352,82 +345,39 @@ app.post('/package', async (req: Request, res: Response) => {
       return;
     }
 
-    // Validate Version (Required)
-    const version = '1.0.0'; // Default version, can be dynamic if needed
-
-    // Validate ID
-    const id = packageName.toLowerCase().replace(/[^a-z0-9\-]/g, '-'); // Normalize Name to match ID requirements
-
-    // S3 Configuration
-    const bucketName = 'team16-npm-registry';
-    const key = `${id}/${version}/package.zip`;
-    const zipFilePath = path.join(__dirname, `${id}.zip`);
-
+    // Validate Content
     if (Content) {
+      if (typeof Content !== 'string' || !/^[A-Za-z0-9+/=]+$/.test(Content)) {
+        res.status(400).send('Invalid Content. Must be a Base64-encoded ZIP.');
+        return;
+      }
+
+      const buffer = Buffer.from(Content, 'base64');
+
+      if (buffer.length > 100 * 1024 * 1024) { // 100MB limit
+        res.status(413).send('Payload too large.');
+        return;
+      }
+
       try {
-        // Decode base64 content and save as ZIP file
-        const buffer = Buffer.from(Content, 'base64');
+        const zipFilePath = path.join(__dirname, `${packageName}.zip`);
         await fsp.writeFile(zipFilePath, buffer);
 
-        // Upload ZIP file to S3
-        const result = await uploadS3(zipFilePath, bucketName, key);
+        // Upload to S3
+        const result = await uploadS3(zipFilePath, 'team16-npm-registry', `${packageName}/1.0.0/package.zip`);
 
         // Cleanup
         await fsp.rm(zipFilePath, { force: true });
 
-        // Response
         res.status(201).json({
-          metadata: { Name: packageName, Version: version, ID: id },
-          data: { Content, JSProgram: JSProgram || null },
+          message: 'Content uploaded successfully.',
+          metadata: { Name: packageName, ID: packageName.toLowerCase(), Version: '1.0.0' },
         });
-        return;
       } catch (err) {
-        console.error('Error handling Content upload:', err);
+        console.error('Error handling Content:', err);
         res.status(500).send('Error processing Content upload.');
-        return;
       }
-    }
-
-    if (URL) {
-      let packageDir = '';
-      try {
-        if (URL.includes('github.com')) {
-          packageDir = await cloneGitHubRepo(URL);
-        } else {
-          res.status(400).send('Invalid URL. Only GitHub URLs are supported.');
-          return;
-        }
-
-        // Zip the package contents
-        const output = fs.createWriteStream(zipFilePath);
-        const archive = new archiver('zip', { zlib: { level: 9 } });
-
-        archive.pipe(output);
-        archive.directory(packageDir, false);
-        await archive.finalize();
-
-        // Convert ZIP to base64
-        const contentBuffer = await fsp.readFile(zipFilePath);
-        const base64Content = contentBuffer.toString('base64');
-
-        // Upload ZIP file to S3
-        const result = await uploadS3(zipFilePath, bucketName, key);
-
-        // Cleanup
-        await fsp.rm(zipFilePath, { force: true });
-        await fsp.rm(packageDir, { recursive: true, force: true });
-
-        // Response
-        res.status(201).json({
-          metadata: { Name: packageName, Version: version, ID: id },
-          data: { Content: base64Content, URL, JSProgram: JSProgram || null },
-        });
-        return;
-      } catch (err) {
-        console.error('Error handling URL:', err);
-        res.status(500).send('Error processing URL.');
-        return;
-      }
+      return;
     }
 
     res.status(400).send('Either Content or URL is required.');
