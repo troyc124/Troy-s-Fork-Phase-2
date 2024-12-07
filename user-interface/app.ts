@@ -17,12 +17,6 @@ import { exec } from 'child_process';
 import tar from 'tar';
 import fsp from 'fs/promises'; // For file system promises
 
-
-// import { promises as fsp } from 'fs';
-// import fs from 'fs/promises';
-// import rimraf from 'rimraf';
-// import { promisify } from 'util';
-
 const app = express();
 const PORT = 3000;
 
@@ -340,6 +334,7 @@ app.post('/package', async (req: Request, res: Response) => {
     }
 
     // Validate Name
+
     if (!packageName || typeof packageName !== 'string' || /[^a-zA-Z0-9\-]/.test(packageName)) {
       res.status(400).send('Invalid or missing Name. Only alphanumeric characters or hyphens are allowed.');
       return;
