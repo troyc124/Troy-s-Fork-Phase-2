@@ -408,18 +408,33 @@ app.post('/package', async (req: Request, res: Response) => {
       let extractedURL = '';
       try {
         const buffer = Buffer.from(Content, 'base64');
+    
+        // Verify buffer is not empty
+        if (buffer.length === 0) {
+          res.status(400).send('Invalid Content. Empty Base64 string.');
+          return;
+        }
+    
         const zipFilePath = path.join(__dirname, `${packageName}.zip`);
-        await fsp.writeFile(zipFilePath, buffer,  { encoding: 'binary' });
-
+    
+        // Write the decoded buffer as a ZIP file
+        await fsp.writeFile(zipFilePath, buffer, { encoding: 'binary' });
+    
+        // Test the file locally to ensure it is a valid ZIP
+        const testBuffer = await fsp.readFile(zipFilePath);
+        if (testBuffer[0] !== 0x50 || testBuffer[1] !== 0x4B) { // ZIP magic numbers
+          throw new Error('Decoded file is not a valid ZIP.');
+        }
+    
         // Extract URL from ZIP content
         extractedURL = await extractURLFromZIP(buffer);
-
-        // Upload ZIP file to S3
+    
+        // Upload to S3
         const result = await uploadS3(zipFilePath, 'team16-npm-registry', `${packageName}/1.0.0/package.zip`);
-
+    
         // Cleanup
         await fsp.rm(zipFilePath, { force: true });
-
+    
         res.status(201).json({
           metadata: {
             Name: packageName,
@@ -438,6 +453,7 @@ app.post('/package', async (req: Request, res: Response) => {
       }
       return;
     }
+    
 
     res.status(400).send('Either Content or URL is required.');
   } catch (err) {
