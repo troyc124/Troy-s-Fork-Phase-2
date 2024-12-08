@@ -530,6 +530,7 @@ app.post('/package', async (req: Request, res: Response) => {
 
           // Upload ZIP file to S3
           await uploadS3(zipFilePath, 'team16-npm-registry', `${packageName}/${version}/package.zip`);
+          metrics = await calculateAllMetrics(URL);
 
           const metadataJSON = {
             Name: packageName,
@@ -538,6 +539,7 @@ app.post('/package', async (req: Request, res: Response) => {
             URL, // Include URL if present
             JSProgram: JSProgram || null,
             Content: base64Content,
+            
           };
     
           // Store metadata in S3
@@ -556,21 +558,14 @@ app.post('/package', async (req: Request, res: Response) => {
           await fsp.rm(packageDir, { recursive: true, force: true });
 
           // Calculate Metrics
-          metrics = await calculateAllMetrics(URL);
 
           res.status(201).json({
-            // metadata: {
-            //   Name: packageName,
-            //   Version: version,
-            //   ID: id,
-            //   RampUpScore: metrics.RampUpScore,
-            //   Correctness: metrics.Correctness,
-            //   BusFactor: metrics.BusFactor,
-            //   ResponsiveMaintainer: metrics.ResponsiveMaintainer,
-            //   LicenseScore: metrics.LicenseScore,
-            //   GoodPinningPractice: metrics.GoodPinningPractice,
-            //   PullRequest: metrics.PullRequest
-            // },
+            metadata: {
+              Name: packageName,
+              Version: version,
+              ID: id,
+              
+            },
             data: {
               Content: base64Content,
               URL: URL, // Use the provided URL
@@ -600,7 +595,7 @@ app.post('/package', async (req: Request, res: Response) => {
     
           // Upload ZIP file to S3
           const result = await uploadS3(zipFilePath, 'team16-npm-registry', `${packageName}/${version}/package.zip`);
-
+          metrics = await calculateAllMetrics(repoUrl);
           const metadataJSON = {
             Name: packageName,
             Version: version,
@@ -622,6 +617,8 @@ app.post('/package', async (req: Request, res: Response) => {
           );
           await fsp.rm(zipFilePath, { force: true });
           await fsp.rm(packageDir, { recursive: true, force: true });
+
+          
       
           res.status(201).json({
             metadata: {
@@ -653,7 +650,7 @@ app.post('/package', async (req: Request, res: Response) => {
     }
 
     // Handle Content-based processing
-    if (Content) {
+    else if (Content) {
       let extractedURL = '';
       try {
         const buffer = Buffer.from(Content, 'base64');
@@ -675,8 +672,7 @@ app.post('/package', async (req: Request, res: Response) => {
           throw new Error('Decoded file is not a valid ZIP.');
         }
 
-        // Extract URL from ZIP content
-        extractedURL = await extractURLFromZIP(buffer);
+        
 
         // Upload to S3
         await uploadS3(zipFilePath, 'team16-npm-registry', `${packageName}/${version}/package.zip`);
@@ -703,25 +699,33 @@ app.post('/package', async (req: Request, res: Response) => {
         // Cleanup
         await fsp.rm(zipFilePath, { force: true });
 
+        // Extract URL from ZIP content
+        try {
+          extractedURL = await extractURLFromZIP(buffer);
+
         // Calculate Metrics
-        metrics = await calculateAllMetrics(extractedURL);
+          metrics = await calculateAllMetrics(extractedURL);
+        }
+        catch (err) {
+          console.error('Error extracting URL:', err);
+        }
 
         res.status(201).json({
           metadata: {
             Name: packageName,
             Version: version,
             ID: id,
-            RampUpScore: metrics.RampUpScore,
-            Correctness: metrics.Correctness,
-            BusFactor: metrics.BusFactor,
-            ResponsiveMaintainer: metrics.ResponsiveMaintainer,
-            LicenseScore: metrics.LicenseScore,
-            GoodPinningPractice: metrics.GoodPinningPractice,
-            PullRequest: metrics.PullRequest
+            // RampUpScore: metrics.RampUpScore,
+            // Correctness: metrics.Correctness,
+            // BusFactor: metrics.BusFactor,
+            // ResponsiveMaintainer: metrics.ResponsiveMaintainer,
+            // LicenseScore: metrics.LicenseScore,
+            // GoodPinningPractice: metrics.GoodPinningPractice,
+            // PullRequest: metrics.PullRequest
           },
           data: {
             Content: Content,
-            URL: extractedURL,
+            //URL: extractedURL,
             JSProgram: JSProgram || null,
           },
         });
@@ -770,6 +774,229 @@ export async function getNpmPackageGithubRepo(packageName: string): Promise<stri
   }
 }
 
+app.post('/package/:id', async (req: Request, res: Response): Promise<void> => {
+  try {
+  const { id } = req.params;
+  const { metadata, data } = req.body;
+  const lastDashIndex = id.lastIndexOf('-');
+    if (lastDashIndex === -1) {
+      throw new Error('Invalid ID format'); // Handle case where `-` is not found
+    }
+        const currentVersion = id.substring(lastDashIndex + 1);
+
+  if (!metadata || !data) {
+    res.status(400).send('Missing required fields in the request body.');
+    return;
+  }
+
+  const { Name, Version } = metadata;
+  const { Content, URL, JSProgram } = data;
+
+  if (!Name || !Version || (!Content && !URL)) {
+    res.status(400).send('Missing required fields in the request body.');
+    return;
+  }
+
+  const bucketName = 'team16-npm-registry';
+  const key = `${Name}/${Version}/metadata.json`;
+
+ 
+
+      if (!isVersionNewer(currentVersion, Version)) {
+        res.status(400).send('The provided version is not newer than the current version.');
+        return;
+      }
+
+
+    let packageDir = '';
+    if (URL) {
+      try {
+      if (URL.includes('github.com')) {
+        packageDir = await cloneGitHubRepo(URL);
+        const zipFilePath = path.join(__dirname, `${Name}.zip`);
+    
+          // Zip the repository contents
+          const output = fs.createWriteStream(zipFilePath);
+          const archive = archiver('zip', { zlib: { level: 9 } });
+          archive.pipe(output);
+          archive.directory(packageDir, false);
+          await archive.finalize();
+    
+          // Read the zip file and encode in Base64
+          const zipFileBuffer = await fsp.readFile(zipFilePath);
+          const base64Content = zipFileBuffer.toString('base64');
+          
+          
+          // Upload ZIP file to S3
+          const result = await uploadS3(zipFilePath, 'team16-npm-registry', `${Name}/${Version}/package.zip`);
+          
+          const metadataJSON = {
+            Name: Name,
+            Version: Version,
+            ID: id, // Consistent ID format
+            URL, // Include URL if present
+            JSProgram: JSProgram || null,
+            Content: base64Content,
+          };
+    
+          // Store metadata in S3
+          const metadataKey = `${Name}/${Version}/metadata.json`;
+          await s3Client.send(
+            new PutObjectCommand({
+              Bucket: 'team16-npm-registry',
+              Key: metadataKey,
+              Body: JSON.stringify(metadataJSON),
+              ContentType: 'application/json',
+            })
+          );
+
+          // Cleanup
+          await fsp.rm(zipFilePath, { force: true });
+          await fsp.rm(packageDir, { recursive: true, force: true });
+    
+          // Respond with metadata and Base64 content
+          res.status(200).send('Package updated successfully.');
+          return;
+        } else if (URL.includes('npmjs.com')) {
+          try {
+            //call NPMtoGithub function
+            const repoUrl = await getNpmPackageGithubRepo(Name);
+            const packageDir = await cloneGitHubRepo(repoUrl); // Assuming this function exists
+            const zipFilePath = path.join(__dirname, `${Name}.zip`);
+      
+            // Zip the repository contents
+            const output = fs.createWriteStream(zipFilePath);
+            const archive = archiver('zip', { zlib: { level: 9 } });
+            archive.pipe(output);
+            archive.directory(packageDir, false);
+            await archive.finalize();
+      
+            // Read the zip file and encode in Base64
+            const zipFileBuffer = await fsp.readFile(zipFilePath);
+            const base64Content = zipFileBuffer.toString('base64');
+      
+            // Upload ZIP file to S3
+            const result = await uploadS3(zipFilePath, 'team16-npm-registry', `${Name}/${Version}/package.zip`);
+            const metadataJSON = {
+              Name: Name,
+              Version: Version,
+              ID: id, // Consistent ID format
+              URL, // Include URL if present
+              JSProgram: JSProgram || null,
+              Content: base64Content,
+            };
+      
+            // Store metadata in S3
+            const metadataKey = `${Name}/${Version}/metadata.json`;
+            await s3Client.send(
+              new PutObjectCommand({
+                Bucket: 'team16-npm-registry',
+                Key: metadataKey,
+                Body: JSON.stringify(metadataJSON),
+                ContentType: 'application/json',
+              })
+            );
+            // Cleanup
+            await fsp.rm(zipFilePath, { force: true });
+            await fsp.rm(packageDir, { recursive: true, force: true });
+      
+            // Respond with metadata and Base64 content
+            res.status(200).send('Package updated successfully.');
+            return;
+          }
+            
+          catch (err) {
+            console.error('Error handling npm package:', err);
+            res.status(500).send('Error processing npm package.');
+            return;
+          }
+        }
+        else {
+          res.status(400).send('Invalid URL. Only GitHub and npm URLs are supported.');
+          return;
+        }
+      }
+       catch (err) {
+        console.error('Error handling URL:', err);
+        res.status(500).send('Error processing URL.');
+        return;
+      }
+      }
+     else {
+      let extractedURL = '';
+      try {
+        const buffer = Buffer.from(Content, 'base64');
+
+        // Verify buffer is not empty
+        if (buffer.length === 0) {
+          res.status(400).send('Invalid Content. Empty Base64 string.');
+          return;
+        }
+
+        const zipFilePath = path.join(__dirname, `${Name}.zip`);
+
+        // Write the decoded buffer as a ZIP file
+        await fsp.writeFile(zipFilePath, buffer, { encoding: 'binary' });
+
+        // Test the file locally to ensure it is a valid ZIP
+        const testBuffer = await fsp.readFile(zipFilePath);
+        if (testBuffer[0] !== 0x50 || testBuffer[1] !== 0x4B) {
+          throw new Error('Decoded file is not a valid ZIP.');
+        }
+
+        // Extract URL from ZIP content
+        //extractedURL = await extractURLFromZIP(buffer);
+
+        // Upload to S3
+        const result = await uploadS3(zipFilePath, 'team16-npm-registry', `${Name}/${Version}/package.zip`);
+
+        const metadataJSON = {
+          Name: Name,
+          Version: Version,
+          ID: id, // Consistent ID format
+          Content, // Include URL if present
+          JSProgram: JSProgram || null,
+        };
+  
+        // Store metadata in S3
+        const metadataKey = `${Name}/${Version}/metadata.json`;
+        await s3Client.send(
+          new PutObjectCommand({
+            Bucket: 'team16-npm-registry',
+            Key: metadataKey,
+            Body: JSON.stringify(metadataJSON),
+            ContentType: 'application/json',
+          })
+        );
+        // Cleanup
+        await fsp.rm(zipFilePath, { force: true });
+
+        res.status(200).send('Package updated successfully.');
+      } catch (err) {
+        console.error('Error handling Content:', err);
+        res.status(500).send('Error processing Content upload.');
+      }
+      return;
+    }
+  } catch (err) {
+    console.error('Internal server error:', err);
+    res.status(500).send('Internal server error.');
+  }
+});
+
+    
+
+// Utility function to check if the new version is newer
+const isVersionNewer = (currentVersion: string, newVersion: string): boolean => {
+  const parseVersion = (v: string) => v.split('.').map(Number);
+  const [cur, newV] = [parseVersion(currentVersion), parseVersion(newVersion)];
+
+  for (let i = 0; i < cur.length; i++) {
+    if (newV[i] > cur[i]) return true;
+    if (newV[i] < cur[i]) return false;
+  }
+  return false;
+};
 
 
 app.delete('/reset', async (req: Request, res: Response): Promise<void> => {
