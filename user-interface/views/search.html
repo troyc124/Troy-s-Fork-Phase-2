@@ -19,6 +19,7 @@
     </ul>
 
     <!-- Upload Form -->
+    <h2>Upload Package via Content</h2>
     <form id="uploadForm" method="POST" enctype="multipart/form-data">
       <label for="packageName">Package Name:</label>
       <input type="text" id="packageName" name="packageName" required>
@@ -32,13 +33,57 @@
       <button type="button" id="uploadButton">Upload</button>
     </form>
 
+    <!-- URL Upload -->
+    <div class="url-input">
+      <h2>Upload Package via URL</h2>
+      <form id="urlForm">
+        <label for="packageUrl">Package URL:</label>
+        <input type="url" id="packageUrl" placeholder="Enter package URL here" required>  
+        <button type="button" id="submitUrlButton">Submit URL</button>
+      </form>
+    </div>
+
     <!-- Reset Button -->
     <button id="resetButton" class="reset-button" style="background-color: red; color: white; border: none; padding: 10px; cursor: pointer; margin-top: 20px;">
       Reset Directory
     </button>
   </div>
 
+
+
   <script>
+
+    // Functionality for submitting a package via URL
+  document.getElementById('submitUrlButton').addEventListener('click', async () => {
+    const packageUrl = document.getElementById('packageUrl').value.trim();
+   
+
+    if (!packageUrl) {
+      alert('Please fill in all fields before submitting.');
+      return;
+    }
+
+    try {
+      const response = await fetch('/package', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          JSProgram: '',
+          URL: packageUrl
+        })
+      });
+
+      if (response.ok) {
+        alert('Package uploaded successfully via URL!');
+        fetchPackages(); // Refresh the package list
+      } else {
+        alert('Failed to upload the package via URL.');
+      }
+    } catch (error) {
+      console.error('Error submitting package via URL:', error);
+      alert('An error occurred while submitting the package.');
+    }
+  });
     // Fetch packages from the server
     async function fetchPackages() {
       try {
