@@ -31,6 +31,11 @@
     
       <button type="button" id="uploadButton">Upload</button>
     </form>
+
+    <!-- Reset Button -->
+    <button id="resetButton" class="reset-button" style="background-color: red; color: white; border: none; padding: 10px; cursor: pointer; margin-top: 20px;">
+      Reset Directory
+    </button>
   </div>
 
   <script>
@@ -52,12 +57,9 @@
     }
 
     function formatPackagesForUI(rawPackages) {
-      // Transform raw JSON into a UI-friendly format
       const formatted = [];
 
       rawPackages.forEach(pkg => {
-        // Assuming each package entry is something like:
-        // { "Name": "example", "Version": "1.0.0" }
         const name = pkg.Name;
         const version = pkg.Version;
 
@@ -75,10 +77,6 @@
       return formatted;
     }
 
-
-
-
-    // Populate the package list dynamically
     function populatePackageList(packages) {
       const packageList = document.getElementById('packageList');
       packageList.innerHTML = ''; // Clear existing content
@@ -92,7 +90,7 @@
           <h3>${pkg.Name}</h3>
           <p>Version: ${pkg.Version}</p>
           <div class="actions">
-            <a href="/packages/${pkg.Name}-${pkg.Version}.zip" class="button download" download>Download</a>
+            <a href="${pkg.DownloadLink}" class="button download" download>Download</a>
             <a href="javascript:void(0);" class="button rate" onclick="checkRating('${pkg.Name}-${pkg.Version}')">Check Rating</a>
           </div>
         `;
@@ -101,25 +99,16 @@
       });
     }
 
-
-
-
-
-
-    // Filter packages based on search input
-    // Filter packages based on search input
     function filterPackages() {
       const searchValue = document.getElementById('searchBar').value.toLowerCase();
       const packages = document.querySelectorAll('.package-item');
 
       packages.forEach(pkg => {
-        const name = pkg.getAttribute('data-id').split('-')[0].toLowerCase(); // Extract the name part of the ID
+        const name = pkg.getAttribute('data-id').split('-')[0].toLowerCase();
         pkg.style.display = name.includes(searchValue) ? 'block' : 'none';
       });
     }
 
-
-    // Upload new package
     document.getElementById('uploadButton').addEventListener('click', async () => {
       const packageName = document.getElementById('packageName').value.trim();
       const version = document.getElementById('version').value.trim();
@@ -142,7 +131,7 @@
 
         if (response.ok) {
           alert('Upload successful!');
-          fetchPackages(); // Refresh the package list
+          fetchPackages();
         } else {
           alert('Upload failed!');
         }
@@ -152,7 +141,6 @@
       }
     });
 
-    // Check rating for a package
     async function checkRating(packageId) {
       try {
         const response = await fetch(`/package/${packageId}/rate`);
@@ -169,11 +157,9 @@
     }
 
     function displayMetrics(metrics, packageId) {
-      // Find the package element
       const packageElement = document.querySelector(`.package-item[data-id="${packageId}"]`);
       if (!packageElement) return;
 
-      // Create a metrics display section
       let metricsSection = packageElement.querySelector('.metrics');
       if (!metricsSection) {
         metricsSection = document.createElement('div');
@@ -181,7 +167,6 @@
         packageElement.appendChild(metricsSection);
       }
 
-      // Populate metrics
       metricsSection.innerHTML = `
         <h4>Metrics:</h4>
         <ul>
@@ -197,8 +182,22 @@
       `;
     }
 
+    document.getElementById('resetButton').addEventListener('click', async () => {
+      if (!confirm('Are you sure you want to reset the directory? This action cannot be undone.')) return;
 
-    // Initialize the page
+      try {
+        const response = await fetch('/reset', { method: 'DELETE' });
+        if (response.ok) {
+          alert('Directory reset successfully!');
+          fetchPackages(); // Refresh the package list
+        } else {
+          alert('Failed to reset the directory.');
+        }
+      } catch (error) {
+        console.error('Error resetting directory:', error);
+      }
+    });
+
     document.addEventListener('DOMContentLoaded', fetchPackages);
   </script>
 </body>
